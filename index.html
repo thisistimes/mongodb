@@ -99,8 +99,6 @@ tr:hover td{background:#1a1a2e;cursor:pointer}
 .welcome p{font-size:12px;font-family:sans-serif;text-align:center;line-height:1.7;max-width:300px}
 .welcome-hint{background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:12px 16px;font-size:11px;color:#555;font-family:sans-serif;line-height:2}
 .welcome-hint b{color:#4da6ff}
-.info-bar{padding:5px 14px;background:#0a0a1a;font-size:11px;color:#444;border-top:1px solid #1e1e38;display:flex;gap:16px;align-items:center;font-family:sans-serif}
-.info-bar .sep{color:#1e1e38}
 .status-dot{width:6px;height:6px;border-radius:50%;background:#28c840;display:inline-block;margin-right:5px}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:#333;gap:8px;padding:40px;font-family:sans-serif}
 .notif{position:fixed;bottom:40px;right:20px;background:#1e2a4a;border:1px solid #3a4a8a;border-radius:8px;padding:10px 16px;font-size:12px;font-family:sans-serif;color:#e0e0e0;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);transition:opacity .3s}
@@ -235,7 +233,16 @@ td{font-size:13px;padding:9px 13px;max-width:240px;}
   <div class="titlebar">
     <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
     <span class="titlebar-title">&#9670; MongoDB Compass — localhost:27017</span>
-    <span class="version-badge">v1.40 Simulator — Readable Thai Font</span>
+    <span class="version-badge">v1.40 Simulator</span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:#555;font-family:sans-serif">
+      <span><span class="status-dot"></span>Connected</span>
+      <span style="color:#2a2a4a">|</span>
+      <span>localhost:27017</span>
+      <span style="color:#2a2a4a">|</span>
+      <span id="coll-info" style="color:#4da6ff">No collection selected</span>
+      <span style="color:#2a2a4a">|</span>
+      <span id="status-msg" style="color:#444">Ready</span>
+    </span>
   </div>
   <div class="main">
     <div class="sidebar">
@@ -279,6 +286,12 @@ td{font-size:13px;padding:9px 13px;max-width:240px;}
           <div class="tab" onclick="switchTab('schema',this)">Schema</div>
           <div class="tab" onclick="switchTab('indexes',this)">Indexes</div>
           <div class="tab" onclick="switchTab('cheatsheet',this)" style="color:#ffbd2e">&#128218; Cheat Sheet</div>
+          <div class="tab" onclick="switchTab('nosql',this)" style="color:#c084fc">&#9670; NoSQL vs SQL</div>
+          <div class="tab" onclick="switchTab('jsonbson',this)" style="color:#2dd4bf">&#9670; JSON vs BSON</div>
+          <div class="tab" onclick="switchTab('datatypes',this)" style="color:#fb923c">&#9670; ชนิดข้อมูล</div>
+          <div class="tab" onclick="switchTab('design',this)" style="color:#f472b6">&#9670; Schema Design</div>
+          <div class="tab" onclick="switchTab('transaction',this)" style="color:#34d399">&#9670; Transaction</div>
+          <div class="tab" onclick="switchTab('errors',this)" style="color:#f87171">&#9670; Error Codes</div>
         </div>
 
         <!-- Documents -->
@@ -331,14 +344,513 @@ td{font-size:13px;padding:9px 13px;max-width:240px;}
           </div>
           <div class="cheat-wrap" id="cheat-list"></div>
         </div>
+
+        <!-- NoSQL vs SQL -->
+        <div class="tab-content hidden" id="nosql-tab" style="overflow-y:auto">
+          <div style="font-family:sans-serif">
+            <div style="margin-bottom:18px">
+              <span style="color:#c084fc;font-size:15px;font-weight:600">NoSQL vs SQL</span>
+              <span style="color:#555;font-size:14px;margin-left:10px">เปรียบเทียบแนวคิดและการใช้งาน</span>
+            </div>
+
+            <!-- Analogy box -->
+            <div style="background:#1a1a2e;border:1px solid #3a3a6a;border-radius:8px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+              <span style="font-size:22px;flex-shrink:0">🗄️</span>
+              <div style="font-size:14px;color:#ccc;line-height:1.75">
+                <span style="color:#4da6ff;font-weight:600">SQL</span> = จัดเก็บในรูป <b>ตาราง</b> ที่กำหนด schema ไว้ล่วงหน้า (เหมือน Excel ที่บังคับให้กรอกทุกช่อง)<br>
+                <span style="color:#c084fc;font-weight:600">NoSQL</span> = "Not Only SQL" — กลุ่ม database ที่ไม่ยึดรูปตาราง ออกแบบสำหรับข้อมูลที่หลากหลายและ scale สูง
+              </div>
+            </div>
+
+            <!-- 4 types -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">4 ประเภทหลักของ NoSQL</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:18px">
+              <div style="background:#1e2a4a;border:1px solid #4da6ff44;border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:20px;margin-bottom:6px">📄</div>
+                <div style="color:#4da6ff;font-weight:600;font-size:14px;margin-bottom:4px">Document</div>
+                <div style="color:#888;font-size:14px;line-height:1.55">เก็บเป็น JSON/BSON แต่ละชิ้นมีโครงสร้างอิสระ</div>
+                <div style="color:#4da6ff;font-size:14px;font-weight:600;margin-top:6px">MongoDB, CouchDB</div>
+              </div>
+              <div style="background:#2a1a0d;border:1px solid #ffbd2e44;border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:20px;margin-bottom:6px">🔑</div>
+                <div style="color:#ffbd2e;font-weight:600;font-size:14px;margin-bottom:4px">Key-Value</div>
+                <div style="color:#888;font-size:14px;line-height:1.55">เข้าถึงด้วย key เดียว เร็วมากเพราะเรียบง่าย</div>
+                <div style="color:#ffbd2e;font-size:14px;font-weight:600;margin-top:6px">Redis, DynamoDB</div>
+              </div>
+              <div style="background:#0d2a0d;border:1px solid #28c84044;border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:20px;margin-bottom:6px">📊</div>
+                <div style="color:#28c840;font-weight:600;font-size:14px;margin-bottom:4px">Column-Family</div>
+                <div style="color:#888;font-size:14px;line-height:1.55">เก็บเป็นคอลัมน์ เหมาะกับ analytics, time-series</div>
+                <div style="color:#28c840;font-size:14px;font-weight:600;margin-top:6px">Cassandra, HBase</div>
+              </div>
+              <div style="background:#1e1e2a;border:1px solid #55555544;border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:20px;margin-bottom:6px">🔗</div>
+                <div style="color:#aaa;font-weight:600;font-size:14px;margin-bottom:4px">Graph</div>
+                <div style="color:#888;font-size:14px;line-height:1.55">เก็บความสัมพันธ์ระหว่าง node เหมาะกับ social network</div>
+                <div style="color:#aaa;font-size:14px;font-weight:600;margin-top:6px">Neo4j, Neptune</div>
+              </div>
+            </div>
+
+            <!-- Comparison table -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">SQL vs NoSQL เปรียบตรง ๆ</div>
+            <div style="overflow-x:auto;margin-bottom:16px">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead>
+                  <tr style="background:#12121f">
+                    <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a;white-space:nowrap">หัวข้อ</th>
+                    <th style="text-align:left;padding:8px 12px;color:#4da6ff;font-size:14px;border-bottom:1px solid #2a2a4a;white-space:nowrap">SQL (MySQL, PostgreSQL)</th>
+                    <th style="text-align:left;padding:8px 12px;color:#c084fc;font-size:14px;border-bottom:1px solid #2a2a4a;white-space:nowrap">NoSQL / MongoDB</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">โครงสร้าง</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">ตาราง (Rows &amp; Columns) กำหนดล่วงหน้า</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#c084fc">Document / Key-Value / Graph ยืดหยุ่น</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">Schema</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">Fixed — ต้องกำหนดก่อน เปลี่ยนต้อง migrate</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#c084fc">Dynamic — เพิ่ม field ได้ทุกเวลา</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ภาษา Query</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">SQL มาตรฐาน (SELECT, JOIN, WHERE)</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#c084fc">MQL (MongoDB Query Language)</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">JOIN</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#28c840">รองรับ JOIN เต็มรูปแบบ</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#e24b4a">$lookup มีแต่ควรหลีกเลี่ยง</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ACID</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#28c840">รองรับเต็ม</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">รองรับ (MongoDB v4+)</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">Scale</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#e24b4a">Vertical เป็นหลัก (อัพเกรด server เดิม)</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#28c840">Horizontal (Sharding กระจาย server)</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">เหมาะกับ</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">การเงิน, ERP, ระบบ integrity สูง</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#c084fc">App, CMS, IoT, Real-time, Big Data</td></tr>
+                  <tr><td style="padding:7px 12px;color:#aaa">ตัวอย่าง</td><td style="padding:7px 12px;color:#ccc">MySQL, PostgreSQL, Oracle, SQL Server</td><td style="padding:7px 12px;color:#c084fc">MongoDB, CouchDB, Firebase Firestore</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Code compare -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">โครงสร้างข้อมูล consent เดียวกัน</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+              <div>
+                <div style="font-size:14px;color:#555;margin-bottom:6px;font-family:sans-serif">SQL — กระจาย 3 ตาราง + JOIN</div>
+                <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:6px;padding:10px 12px;font-size:14px;line-height:1.85">
+<span style="color:#555">-- ตาราง subjects</span>
+<span style="color:#9cdcfe">id</span>  | name       | email
+<span style="color:#b5cea8">001</span> | สมชาย ใจดี | somchai@...
+
+<span style="color:#555">-- ตาราง consents</span>
+<span style="color:#9cdcfe">id</span>  | subj | purp | status
+<span style="color:#b5cea8">c01</span> | <span style="color:#b5cea8">001</span>  | <span style="color:#b5cea8">p01</span>  | granted
+
+<span style="color:#555">-- ต้อง JOIN ทั้งหมดเพื่อดู 1 consent</span>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:14px;color:#555;margin-bottom:6px;font-family:sans-serif">MongoDB — document เดียวจบ ไม่ต้อง JOIN</div>
+                <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:6px;padding:10px 12px;font-size:14px;line-height:1.85">
+{
+  <span style="color:#9cdcfe">"_id"</span>: <span style="color:#ce9178">"con001"</span>,
+  <span style="color:#9cdcfe">"subjectName"</span>: <span style="color:#ce9178">"สมชาย ใจดี"</span>,
+  <span style="color:#9cdcfe">"email"</span>: <span style="color:#ce9178">"somchai@..."</span>,
+  <span style="color:#9cdcfe">"purposeName"</span>: <span style="color:#ce9178">"การตลาด"</span>,
+  <span style="color:#9cdcfe">"status"</span>: <span style="color:#ce9178">"granted"</span>,
+  <span style="color:#9cdcfe">"channel"</span>: <span style="color:#ce9178">"web"</span>
+}
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#1e2a4a;border-left:3px solid #4da6ff;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75">
+              <span style="color:#4da6ff;font-weight:600">สรุป:</span> NoSQL ไม่ได้ดีกว่า SQL — แต่เหมาะกับงานคนละประเภท ระบบขนาดใหญ่มักใช้ทั้งคู่ร่วมกัน เช่น SQL สำหรับธุรกรรมการเงิน + MongoDB สำหรับ consent และ user profile
+            </div>
+          </div>
+        </div>
+
+        <!-- JSON vs BSON -->
+        <div class="tab-content hidden" id="jsonbson-tab" style="overflow-y:auto">
+          <div style="font-family:sans-serif">
+            <div style="margin-bottom:18px">
+              <span style="color:#2dd4bf;font-size:15px;font-weight:600">JSON vs BSON</span>
+              <span style="color:#555;font-size:14px;margin-left:10px">MongoDB ใช้อะไรจริง ๆ ภายใน?</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+              <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-top:3px solid #ffbd2e;border-radius:6px;padding:14px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                  <span style="font-size:18px">📝</span>
+                  <span style="color:#ffbd2e;font-weight:600;font-size:14px">JSON</span>
+                  <span class="badge badge-amber" style="font-size:10px;padding:2px 8px">Human-readable</span>
+                </div>
+                <div style="color:#888;font-size:14px;line-height:1.75;margin-bottom:10px">JSON = JavaScript Object Notation<br>รูปแบบ text มาตรฐาน เปิดอ่านได้ทันที ใช้ทั่วไปใน web API</div>
+                <div style="background:#060610;border:1px solid #1a1a38;border-radius:5px;padding:10px 12px;font-size:14px;line-height:1.85">
+{
+  <span style="color:#9cdcfe">"name"</span>: <span style="color:#ce9178">"สมชาย"</span>,
+  <span style="color:#9cdcfe">"age"</span>: <span style="color:#b5cea8">34</span>,
+  <span style="color:#9cdcfe">"active"</span>: <span style="color:#569cd6">true</span>,
+  <span style="color:#9cdcfe">"tags"</span>: [<span style="color:#ce9178">"pdpa"</span>, <span style="color:#ce9178">"web"</span>]
+}
+                </div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-top:3px solid #2dd4bf;border-radius:6px;padding:14px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                  <span style="font-size:18px">⚡</span>
+                  <span style="color:#2dd4bf;font-weight:600;font-size:14px">BSON</span>
+                  <span class="badge badge-blue" style="font-size:10px;padding:2px 8px">Binary + Fast</span>
+                </div>
+                <div style="color:#888;font-size:14px;line-height:1.75;margin-bottom:10px">BSON = Binary JSON<br>MongoDB ใช้ภายใน เพิ่ม type พิเศษ อ่านเร็วกว่า JSON มาก</div>
+                <div style="background:#060610;border:1px solid #1a1a38;border-radius:5px;padding:10px 12px;font-size:14px;line-height:1.85">
+<span style="color:#555">// BSON เก็บเป็น binary (ไม่อ่านด้วยตาได้)</span>
+<span style="color:#555">// MongoDB Driver แปลงให้อัตโนมัติ</span>
+
+\x16\x00\x00\x00
+\x02<span style="color:#9cdcfe">name</span>\x00\x07สมชาย
+\x10<span style="color:#9cdcfe">age</span>\x00\x22\x00
+\x08<span style="color:#9cdcfe">active</span>\x00\x01
+...
+                </div>
+              </div>
+            </div>
+
+            <!-- Diff table -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">ความแตกต่างสำคัญ</div>
+            <div style="overflow-x:auto;margin-bottom:16px">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead>
+                  <tr style="background:#12121f">
+                    <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a">หัวข้อ</th>
+                    <th style="text-align:left;padding:8px 12px;color:#ffbd2e;font-size:14px;border-bottom:1px solid #2a2a4a">JSON</th>
+                    <th style="text-align:left;padding:8px 12px;color:#2dd4bf;font-size:14px;border-bottom:1px solid #2a2a4a">BSON</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">รูปแบบ</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">Text (UTF-8)</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#2dd4bf">Binary</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">อ่านด้วยตาได้</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#28c840">ได้ทันที</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#e24b4a">ไม่ได้ (ต้องแปลง)</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ขนาดไฟล์</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">ใหญ่กว่าเล็กน้อย</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#28c840">เล็กกว่า (binary compressed)</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ความเร็ว parse</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">ช้ากว่า</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#28c840">เร็วกว่ามาก</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ชนิดข้อมูล</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ccc">String, Number, Boolean, Array, Object, Null</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#2dd4bf">ทุกอย่างใน JSON + Date, ObjectId, Binary, Decimal128, Regex...</td></tr>
+                  <tr><td style="padding:7px 12px;color:#aaa">ใช้ที่ไหน</td><td style="padding:7px 12px;color:#ccc">API response, config file, web</td><td style="padding:7px 12px;color:#2dd4bf">เก็บใน MongoDB ภายใน</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- BSON extra types -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">BSON เพิ่ม type พิเศษที่ JSON ไม่มี</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px">
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:10px 12px">
+                <div style="font-family:'Courier New',monospace;font-size:14px;font-weight:600;background:#1e2a4a;color:#4da6ff;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">ObjectId</div>
+                <div style="color:#888;font-size:14px;line-height:1.55;margin-bottom:4px">Primary key 12 bytes ไม่ซ้ำกันทั่วโลก</div>
+                <div style="font-family:'Courier New',monospace;font-size:14px;color:#555">ObjectId("64b2f3a1...")</div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:10px 12px">
+                <div style="font-family:'Courier New',monospace;font-size:14px;font-weight:600;background:#0d2a0d;color:#28c840;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">Date</div>
+                <div style="color:#888;font-size:14px;line-height:1.55;margin-bottom:4px">วันที่ millisecond precision ไม่ใช่ string</div>
+                <div style="font-family:'Courier New',monospace;font-size:14px;color:#555">ISODate("2024-01-15T09:23Z")</div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:10px 12px">
+                <div style="font-family:'Courier New',monospace;font-size:14px;font-weight:600;background:#2a1a0d;color:#ffbd2e;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">Decimal128</div>
+                <div style="color:#888;font-size:14px;line-height:1.55;margin-bottom:4px">ทศนิยมแม่นยำสูง สำหรับการเงิน</div>
+                <div style="font-family:'Courier New',monospace;font-size:14px;color:#555">NumberDecimal("9999.99")</div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:10px 12px">
+                <div style="font-family:'Courier New',monospace;font-size:14px;font-weight:600;background:#1e1e38;color:#aaa;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">BinData</div>
+                <div style="color:#888;font-size:14px;line-height:1.55;margin-bottom:4px">เก็บ binary เช่น รูปภาพ, UUID, hash</div>
+                <div style="font-family:'Courier New',monospace;font-size:14px;color:#555">BinData(0, "abc123==")</div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:10px 12px">
+                <div style="font-family:'Courier New',monospace;font-size:14px;font-weight:600;background:#1e1e38;color:#aaa;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">Regex</div>
+                <div style="color:#888;font-size:14px;line-height:1.55;margin-bottom:4px">Regular expression เก็บใน document ได้</div>
+                <div style="font-family:'Courier New',monospace;font-size:14px;color:#555">/^consent/i</div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:10px 12px">
+                <div style="font-family:'Courier New',monospace;font-size:14px;font-weight:600;background:#1e1e38;color:#aaa;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">Timestamp</div>
+                <div style="color:#888;font-size:14px;line-height:1.55;margin-bottom:4px">ใช้ภายใน MongoDB สำหรับ replication</div>
+                <div style="font-family:'Courier New',monospace;font-size:14px;color:#555">Timestamp(1705312991, 1)</div>
+              </div>
+            </div>
+
+            <div style="background:#1e2a4a;border-left:3px solid #2dd4bf;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75;margin-bottom:10px">
+              <span style="color:#2dd4bf;font-weight:600">Workflow:</span> เราเขียน JSON → Driver แปลงเป็น BSON → เก็บใน disk → เมื่อ query กลับ Driver แปลง BSON → JSON ให้อัตโนมัติ ผู้ใช้ไม่ต้องสนใจ BSON เลย
+            </div>
+            <div style="background:#2a1a0d;border-left:3px solid #ffbd2e;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75">
+              <span style="color:#ffbd2e;font-weight:600">⚠ ข้อควรระวัง:</span> JSON ไม่มี Date type — ถ้าเก็บวันที่เป็น String จะเรียงลำดับได้แค่ตัวอักษร ควรใช้ BSON Date เสมอ
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Types -->
+        <div class="tab-content hidden" id="datatypes-tab" style="overflow-y:auto">
+          <div style="font-family:sans-serif">
+            <div style="margin-bottom:18px">
+              <span style="color:#fb923c;font-size:15px;font-weight:600">ชนิดข้อมูลใน MongoDB (BSON Types)</span>
+              <span style="color:#555;font-size:14px;margin-left:10px">การเลือก type ที่ถูกต้องส่งผลต่อ query speed และ storage</span>
+            </div>
+
+            <!-- Live example from consent data -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">ตัวอย่างจากระบบ Consent จริง</div>
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:6px;padding:12px 14px;font-size:14px;line-height:1.9;margin-bottom:18px">
+{
+  <span style="color:#9cdcfe">"_id"</span>:           <span style="color:#4ec9b0">ObjectId</span>(<span style="color:#ce9178">"64b2f..."</span>),      <span style="color:#555">// ObjectId — 12 bytes, auto-generated</span>
+  <span style="color:#9cdcfe">"subjectName"</span>:   <span style="color:#ce9178">"สมชาย ใจดี"</span>,             <span style="color:#555">// String — UTF-8</span>
+  <span style="color:#9cdcfe">"version"</span>:       <span style="color:#ce9178">"2.1"</span>,                   <span style="color:#555">// String</span>
+  <span style="color:#9cdcfe">"withdrawable"</span>:  <span style="color:#569cd6">true</span>,                   <span style="color:#555">// Boolean</span>
+  <span style="color:#9cdcfe">"consentDate"</span>:   <span style="color:#4ec9b0">ISODate</span>(<span style="color:#ce9178">"2024-01-15..."</span>), <span style="color:#555">// Date — ms precision</span>
+  <span style="color:#9cdcfe">"expiryDate"</span>:    <span style="color:#4ec9b0">ISODate</span>(<span style="color:#ce9178">"2025-01-15..."</span>), <span style="color:#555">// Date</span>
+  <span style="color:#9cdcfe">"dataTypes"</span>:     [<span style="color:#ce9178">"email"</span>, <span style="color:#ce9178">"name"</span>],        <span style="color:#555">// Array</span>
+  <span style="color:#9cdcfe">"retentionDays"</span>: <span style="color:#b5cea8">365</span>,                   <span style="color:#555">// Int32</span>
+  <span style="color:#9cdcfe">"guardianId"</span>:    <span style="color:#569cd6">null</span>,                   <span style="color:#555">// Null</span>
+  <span style="color:#9cdcfe">"metadata"</span>:      { <span style="color:#9cdcfe">"browser"</span>: <span style="color:#ce9178">"Chrome"</span> }  <span style="color:#555">// Embedded Document</span>
+}
+            </div>
+
+            <!-- Full types table -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">ชนิดข้อมูลทั้งหมด</div>
+            <div style="overflow-x:auto;margin-bottom:16px">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead>
+                  <tr style="background:#12121f">
+                    <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a;white-space:nowrap">Type</th>
+                    <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a">Code</th>
+                    <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a">คำอธิบาย</th>
+                    <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a">ตัวอย่าง</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-blue">String</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">2</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ข้อความ UTF-8 รองรับภาษาไทย</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#ce9178;font-family:'Courier New',monospace;font-size:11px">"สมชาย ใจดี"</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-amber">Int32</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">16</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">จำนวนเต็ม 32-bit (−2B ถึง 2B)</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#b5cea8;font-family:'Courier New',monospace;font-size:11px">365, -1, 0</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-amber">Int64</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">18</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">จำนวนเต็ม 64-bit สำหรับตัวเลขใหญ่</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#b5cea8;font-family:'Courier New',monospace;font-size:11px">NumberLong(9999999999)</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-amber">Double</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">1</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ทศนิยม 64-bit floating point</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#b5cea8;font-family:'Courier New',monospace;font-size:11px">3.14, 99.99</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-amber">Decimal128</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">19</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ทศนิยมแม่นยำสูง ใช้กับข้อมูลการเงิน</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#b5cea8;font-family:'Courier New',monospace;font-size:11px">NumberDecimal("9999.99")</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-blue">Boolean</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">8</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ค่า true หรือ false</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#569cd6;font-family:'Courier New',monospace;font-size:11px">true, false</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-green">Date</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">9</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">วันที่และเวลา (ms ตั้งแต่ Unix epoch) เรียงลำดับได้</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#4ec9b0;font-family:'Courier New',monospace;font-size:11px">ISODate("2024-01-15T09:23:11Z")</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-gray">Null</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">10</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ไม่มีค่า หรือ field หายไป</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#569cd6;font-family:'Courier New',monospace;font-size:11px">null</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-blue">ObjectId</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">7</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">Primary key 12 bytes: timestamp+machine+pid+counter</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#4ec9b0;font-family:'Courier New',monospace;font-size:11px">ObjectId("64b2f3a1c...")</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-blue">Array</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">4</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ลิสต์ค่า query ค่าในอาร์เรย์ได้โดยตรง</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#dcdcaa;font-family:'Courier New',monospace;font-size:11px">["email","name","location"]</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-blue">Object</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">3</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">Embedded document ซ้อนใน document</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#4ec9b0;font-family:'Courier New',monospace;font-size:11px">{"browser":"Chrome","os":"iOS"}</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-gray">BinData</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">5</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ข้อมูล binary: รูปภาพ, ไฟล์, UUID</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace;font-size:11px">BinData(0, "SGVsbG8=")</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525"><span class="badge badge-gray">Regex</span></td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace">11</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">Regular expression เก็บใน document ได้</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#555;font-family:'Courier New',monospace;font-size:11px">/^granted/i</td></tr>
+                  <tr><td style="padding:7px 12px;color:#777"><span class="badge badge-gray">Timestamp</span></td><td style="padding:7px 12px;color:#444;font-family:'Courier New',monospace">17</td><td style="padding:7px 12px;color:#555">ใช้ภายใน MongoDB สำหรับ replication (ไม่ใช้แทน Date)</td><td style="padding:7px 12px;color:#444;font-family:'Courier New',monospace;font-size:11px">Timestamp(1705312991, 1)</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Warnings -->
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">⚠ ข้อควรระวัง</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+              <div style="background:#2a0d0d;border-left:3px solid #e24b4a;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75">
+                <span style="color:#e24b4a;font-weight:600">Date vs String:</span> เก็บวันที่เป็น String <code style="color:#ce9178">"2024-01-15"</code> จะเรียงลำดับผิด — ใช้ <code style="color:#4ec9b0">ISODate</code> เสมอเพื่อให้ query ช่วงวันที่ถูกต้อง
+              </div>
+              <div style="background:#2a0d0d;border-left:3px solid #e24b4a;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75">
+                <span style="color:#e24b4a;font-weight:600">Double vs Decimal128:</span> <code style="color:#b5cea8">0.1 + 0.2 = 0.30000000000000004</code> ใน Double — ข้อมูลการเงินต้องใช้ Decimal128 เสมอ
+              </div>
+              <div style="background:#2a0d0d;border-left:3px solid #e24b4a;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75">
+                <span style="color:#e24b4a;font-weight:600">Null vs field หาย:</span> <code style="color:#ce9178">{"expiryDate": null}</code> ต่างจาก document ที่ไม่มี field expiryDate — query <code style="color:#ce9178">{expiryDate: null}</code> จับได้ทั้งสองแบบ
+              </div>
+            </div>
+
+            <div style="background:#1e2a4a;border-left:3px solid #fb923c;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75">
+              <span style="color:#fb923c;font-weight:600">ObjectId เก็บอะไรบ้าง?</span> 12 bytes: Timestamp 4 bytes (รู้เวลาสร้าง) + Machine ID 5 bytes + Counter 3 bytes — แปลว่าอ่านเวลาสร้าง document จาก <code style="color:#4da6ff">_id</code> ได้เลย!
+            </div>
+          </div>
+        </div>
+
+        <!-- Schema Design: Embedding vs Referencing -->
+        <div class="tab-content hidden" id="design-tab" style="overflow-y:auto">
+          <div style="font-family:sans-serif">
+            <div style="margin-bottom:18px">
+              <span style="color:#f472b6;font-size:15px;font-weight:600">Schema Design — Embedding vs Referencing</span>
+              <span style="color:#555;font-size:14px;margin-left:10px">หัวใจของการออกแบบ MongoDB ที่ดี</span>
+            </div>
+            <div style="background:#1a1a2e;border:1px solid #3a3a6a;border-radius:8px;padding:14px 16px;margin-bottom:18px;display:flex;gap:12px">
+              <span style="font-size:22px;flex-shrink:0">🏗️</span>
+              <div style="font-size:14px;color:#ccc;line-height:1.75">
+                ใน SQL เราคิดถึง <b style="color:#4da6ff">table</b> ก่อน แล้วค่อย JOIN ทีหลัง<br>
+                ใน MongoDB เราคิดถึง <b style="color:#f472b6">access pattern</b> ก่อน — ข้อมูลที่ query พร้อมกันควรอยู่ใน document เดียวกัน
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+              <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-top:3px solid #f472b6;border-radius:6px;padding:14px">
+                <div style="color:#f472b6;font-weight:600;font-size:14px;margin-bottom:6px">📦 Embedding (Denormalized)</div>
+                <div style="color:#888;font-size:14px;line-height:1.7;margin-bottom:10px">ซ้อนข้อมูลที่เกี่ยวข้องไว้ใน document เดียว</div>
+                <div style="background:#060610;border:1px solid #1a1a38;border-radius:5px;padding:10px 12px;font-size:14px;line-height:1.85;margin-bottom:10px">{
+  <span style="color:#9cdcfe">"_id"</span>: <span style="color:#ce9178">"con001"</span>,
+  <span style="color:#9cdcfe">"status"</span>: <span style="color:#ce9178">"granted"</span>,
+  <span style="color:#9cdcfe">"subject"</span>: {        <span style="color:#555">// ← embed</span>
+    <span style="color:#9cdcfe">"name"</span>: <span style="color:#ce9178">"สมชาย"</span>,
+    <span style="color:#9cdcfe">"email"</span>: <span style="color:#ce9178">"s@ex.com"</span>
+  },
+  <span style="color:#9cdcfe">"purpose"</span>: {        <span style="color:#555">// ← embed</span>
+    <span style="color:#9cdcfe">"name"</span>: <span style="color:#ce9178">"การตลาด"</span>
+  }
+}</div>
+                <div style="font-size:14px;color:#28c840;margin-bottom:3px">✓ อ่าน 1 query ได้ข้อมูลครบ</div>
+                <div style="font-size:14px;color:#28c840;margin-bottom:3px">✓ เร็วมาก ไม่ต้อง JOIN</div>
+                <div style="font-size:14px;color:#e24b4a;margin-bottom:3px">✗ ถ้า subject เปลี่ยนชื่อ ต้อง update ทุก consent</div>
+                <div style="font-size:14px;color:#e24b4a">✗ document อาจใหญ่เกิน 16MB</div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-top:3px solid #4da6ff;border-radius:6px;padding:14px">
+                <div style="color:#4da6ff;font-weight:600;font-size:14px;margin-bottom:6px">🔗 Referencing (Normalized)</div>
+                <div style="color:#888;font-size:14px;line-height:1.7;margin-bottom:10px">เก็บแค่ _id แล้วใช้ $lookup หรือ app join</div>
+                <div style="background:#060610;border:1px solid #1a1a38;border-radius:5px;padding:10px 12px;font-size:14px;line-height:1.85;margin-bottom:10px"><span style="color:#555">// consents</span>
+{
+  <span style="color:#9cdcfe">"_id"</span>: <span style="color:#ce9178">"con001"</span>,
+  <span style="color:#9cdcfe">"status"</span>: <span style="color:#ce9178">"granted"</span>,
+  <span style="color:#9cdcfe">"subjectId"</span>: <span style="color:#ce9178">"sub001"</span>, <span style="color:#555">// ← ref</span>
+  <span style="color:#9cdcfe">"purposeId"</span>: <span style="color:#ce9178">"pur001"</span>  <span style="color:#555">// ← ref</span>
+}
+<span style="color:#555">// data_subjects</span>
+{ <span style="color:#9cdcfe">"_id"</span>: <span style="color:#ce9178">"sub001"</span>, <span style="color:#9cdcfe">"name"</span>: <span style="color:#ce9178">"สมชาย"</span> }</div>
+                <div style="font-size:14px;color:#28c840;margin-bottom:3px">✓ ข้อมูลไม่ซ้ำ แก้ที่เดียวได้เลย</div>
+                <div style="font-size:14px;color:#28c840;margin-bottom:3px">✓ document เล็ก ประหยัด storage</div>
+                <div style="font-size:14px;color:#e24b4a;margin-bottom:3px">✗ ต้อง 2 query หรือใช้ $lookup</div>
+                <div style="font-size:14px;color:#e24b4a">✗ $lookup ช้ากว่า embed มาก</div>
+              </div>
+            </div>
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">เมื่อไหร่ใช้อะไร</div>
+            <div style="overflow-x:auto;margin-bottom:16px">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead><tr style="background:#12121f">
+                  <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a">เงื่อนไข</th>
+                  <th style="text-align:left;padding:8px 12px;color:#f472b6;font-size:14px;border-bottom:1px solid #2a2a4a">Embed</th>
+                  <th style="text-align:left;padding:8px 12px;color:#4da6ff;font-size:14px;border-bottom:1px solid #2a2a4a">Reference</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ความสัมพันธ์</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#f472b6">One-to-One, One-to-Few</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#4da6ff">One-to-Many, Many-to-Many</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ข้อมูลเปลี่ยนบ่อย?</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#f472b6">ไม่ค่อยเปลี่ยน (เช่น proof hash)</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#4da6ff">เปลี่ยนบ่อย (เช่น ชื่อ, email)</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">query พร้อมกัน?</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#f472b6">ใช้ด้วยกันเสมอ</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#4da6ff">บางครั้งใช้แยกกัน</td></tr>
+                  <tr><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#aaa">ขนาดข้อมูลย่อย</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#f472b6">ไม่เกิน ~20 รายการ</td><td style="padding:7px 12px;border-bottom:1px solid #151525;color:#4da6ff">จำนวนมาก/ไม่จำกัด</td></tr>
+                  <tr><td style="padding:7px 12px;color:#aaa">ตัวอย่างจริง</td><td style="padding:7px 12px;color:#f472b6">proof, metadata, address</td><td style="padding:7px 12px;color:#4da6ff">subjectId, purposeId, logs</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">⚠ Anti-patterns ที่พบบ่อย</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+              <div style="background:#2a0d0d;border-left:3px solid #e24b4a;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#e24b4a;font-weight:600">Unbounded Array:</span> เก็บ logs ไว้ใน array ของ consent document — array โตไม่หยุด document เกิน 16MB<br><span style="color:#555">✓ แก้โดย: แยก consent_logs ออกเป็น collection แล้ว reference</span></div>
+              <div style="background:#2a0d0d;border-left:3px solid #e24b4a;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#e24b4a;font-weight:600">Massive Document:</span> embed ทุกอย่างจน field หลักร้อย — index ไม่มีประสิทธิภาพ<br><span style="color:#555">✓ แก้โดย: แยก field ที่ใช้บ่อยไว้ document หลัก ส่วนข้อมูลเสริมแยก collection</span></div>
+              <div style="background:#2a0d0d;border-left:3px solid #e24b4a;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#e24b4a;font-weight:600">Polymorphic Hell:</span> ใช้ collection เดียวเก็บข้อมูลต่างกันมากเกิน จน field overlap<br><span style="color:#555">✓ แก้โดย: แยก collection ตาม type หรือใช้ discriminator field + schema validation</span></div>
+            </div>
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">$lookup — ดึง Reference ข้าม Collection</div>
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:6px;padding:12px 14px;font-size:14px;line-height:1.9;margin-bottom:12px"><span style="color:#555">// Join consents กับ data_subjects</span>
+<span style="color:#dcdcaa">db</span>.<span style="color:#e0e0e0">consents</span>.<span style="color:#dcdcaa">aggregate</span>([
+  { <span style="color:#4da6ff">$lookup</span>: {
+      <span style="color:#9cdcfe">from</span>:         <span style="color:#ce9178">"data_subjects"</span>,
+      <span style="color:#9cdcfe">localField</span>:   <span style="color:#ce9178">"subjectId"</span>,
+      <span style="color:#9cdcfe">foreignField</span>: <span style="color:#ce9178">"_id"</span>,
+      <span style="color:#9cdcfe">as</span>:           <span style="color:#ce9178">"subjectInfo"</span>
+  }},
+  { <span style="color:#4da6ff">$unwind</span>: <span style="color:#ce9178">"$subjectInfo"</span> },
+  { <span style="color:#4da6ff">$project</span>: {
+      <span style="color:#9cdcfe">status</span>: <span style="color:#b5cea8">1</span>, <span style="color:#9cdcfe">"subjectInfo.name"</span>: <span style="color:#b5cea8">1</span>
+  }}
+])</div>
+            <div style="background:#2a1a0d;border-left:3px solid #ffbd2e;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#ffbd2e;font-weight:600">⚠ $lookup ช้ากว่า embed มาก</span> — ใช้เฉพาะเมื่อ reference เป็น pattern ที่เหมาะสม ถ้า query ทำบ่อยควรพิจารณา denormalize</div>
+          </div>
+        </div>
+
+        <!-- Transaction -->
+        <div class="tab-content hidden" id="transaction-tab" style="overflow-y:auto">
+          <div style="font-family:sans-serif">
+            <div style="margin-bottom:18px">
+              <span style="color:#34d399;font-size:15px;font-weight:600">Transaction ใน MongoDB</span>
+              <span style="color:#555;font-size:14px;margin-left:10px">ACID multi-document transactions (v4.0+)</span>
+            </div>
+            <div style="background:#1a1a2e;border:1px solid #3a3a6a;border-radius:8px;padding:14px 16px;margin-bottom:18px;display:flex;gap:12px">
+              <span style="font-size:22px;flex-shrink:0">⚛️</span>
+              <div style="font-size:14px;color:#ccc;line-height:1.75">
+                MongoDB v4.0+ รองรับ <b style="color:#34d399">multi-document ACID transaction</b> ทำงานบน Replica Set<br>
+                v4.2+ รองรับ transaction ข้าม Shard (distributed transaction)<br>
+                <span style="color:#888">แต่ถ้าออกแบบ schema ดี (embed ข้อมูลที่ต้อง atomic ไว้ด้วยกัน) มักไม่ต้องใช้ transaction เลย</span>
+              </div>
+            </div>
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">ACID คืออะไร?</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:18px">
+              <div style="background:#1e2a4a;border:1px solid #3a5a9a;border-radius:8px;padding:12px"><div style="color:#4da6ff;font-weight:600;font-size:14px;margin-bottom:4px">A — Atomicity</div><div style="color:#888;font-size:14px;line-height:1.55">ทำทั้งหมดหรือไม่ทำเลย ถ้า error rollback ทั้งหมด</div></div>
+              <div style="background:#0d2a0d;border:1px solid #1a5a1a;border-radius:8px;padding:12px"><div style="color:#28c840;font-weight:600;font-size:14px;margin-bottom:4px">C — Consistency</div><div style="color:#888;font-size:14px;line-height:1.55">ข้อมูลต้องถูกต้องตาม rule ก่อนและหลัง transaction</div></div>
+              <div style="background:#2a1a0d;border:1px solid #5a3a1a;border-radius:8px;padding:12px"><div style="color:#ffbd2e;font-weight:600;font-size:14px;margin-bottom:4px">I — Isolation</div><div style="color:#888;font-size:14px;line-height:1.55">transaction ที่ยังไม่ commit ไม่ส่งผลต่อ session อื่น</div></div>
+              <div style="background:#2a0d2a;border:1px solid #5a1a5a;border-radius:8px;padding:12px"><div style="color:#c084fc;font-weight:600;font-size:14px;margin-bottom:4px">D — Durability</div><div style="color:#888;font-size:14px;line-height:1.55">เมื่อ commit แล้วข้อมูลไม่หายแม้ server crash</div></div>
+            </div>
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">ตัวอย่าง: Transaction ระบบ Consent (Node.js)</div>
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:6px;padding:12px 14px;font-size:14px;line-height:1.9;margin-bottom:14px"><span style="color:#555">// withdraw consent พร้อมบันทึก log แบบ atomic</span>
+<span style="color:#555">// ถ้า step ใดล้มเหลว ทั้งคู่จะ rollback อัตโนมัติ</span>
+
+<span style="color:#569cd6">const</span> <span style="color:#9cdcfe">session</span> = <span style="color:#569cd6">await</span> client.<span style="color:#dcdcaa">startSession</span>();
+<span style="color:#569cd6">try</span> {
+  session.<span style="color:#dcdcaa">startTransaction</span>({
+    <span style="color:#9cdcfe">readConcern</span>:  { <span style="color:#9cdcfe">level</span>: <span style="color:#ce9178">'snapshot'</span> },
+    <span style="color:#9cdcfe">writeConcern</span>: { <span style="color:#9cdcfe">w</span>: <span style="color:#ce9178">'majority'</span> }
+  });
+
+  <span style="color:#555">// Step 1: อัปเดต consent status</span>
+  <span style="color:#569cd6">await</span> db.<span style="color:#dcdcaa">collection</span>(<span style="color:#ce9178">'consents'</span>).<span style="color:#dcdcaa">updateOne</span>(
+    { <span style="color:#9cdcfe">_id</span>: <span style="color:#ce9178">'con001'</span> },
+    { <span style="color:#4da6ff">$set</span>: { <span style="color:#9cdcfe">status</span>: <span style="color:#ce9178">'withdrawn'</span>, <span style="color:#9cdcfe">withdrawDate</span>: <span style="color:#569cd6">new</span> <span style="color:#dcdcaa">Date</span>() } },
+    { session }
+  );
+
+  <span style="color:#555">// Step 2: บันทึก log</span>
+  <span style="color:#569cd6">await</span> db.<span style="color:#dcdcaa">collection</span>(<span style="color:#ce9178">'consent_logs'</span>).<span style="color:#dcdcaa">insertOne</span>(
+    { <span style="color:#9cdcfe">consentId</span>: <span style="color:#ce9178">'con001'</span>, <span style="color:#9cdcfe">action</span>: <span style="color:#ce9178">'withdraw'</span>, <span style="color:#9cdcfe">actionDate</span>: <span style="color:#569cd6">new</span> <span style="color:#dcdcaa">Date</span>() },
+    { session }
+  );
+
+  <span style="color:#569cd6">await</span> session.<span style="color:#dcdcaa">commitTransaction</span>();   <span style="color:#555">// ✓ บันทึกทั้งคู่</span>
+} <span style="color:#569cd6">catch</span> (err) {
+  <span style="color:#569cd6">await</span> session.<span style="color:#dcdcaa">abortTransaction</span>();    <span style="color:#555">// ✗ ยกเลิกทั้งคู่</span>
+  <span style="color:#569cd6">throw</span> err;
+} <span style="color:#569cd6">finally</span> {
+  <span style="color:#569cd6">await</span> session.<span style="color:#dcdcaa">endSession</span>();
+}</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+              <div style="background:#0d2a0d;border-left:3px solid #28c840;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#28c840;font-weight:600">✓ เมื่อไหร่ควรใช้:</span> ต้องอัปเดต 2 collection พร้อมกันแบบ atomic เช่น consents + consent_logs ถ้า step ใดล้มเหลวต้อง rollback ทั้งหมด</div>
+              <div style="background:#2a1a0d;border-left:3px solid #ffbd2e;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#ffbd2e;font-weight:600">⚠ Transaction มี overhead:</span> ช้ากว่า single document operation — ใช้เฉพาะเมื่อจำเป็น ถ้า embed ข้อมูลในที่เดียวได้ไม่ต้องใช้</div>
+              <div style="background:#2a0d0d;border-left:3px solid #e24b4a;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#e24b4a;font-weight:600">✗ ข้อจำกัด:</span> ต้องใช้บน Replica Set เท่านั้น | timeout default 60 วินาที | สร้าง collection ใหม่ใน transaction ไม่ได้</div>
+            </div>
+            <div style="background:#1e2a4a;border-left:3px solid #34d399;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#34d399;font-weight:600">Single Document = ฟรี ACID:</span> MongoDB มี atomic operation ในระดับ single document อยู่แล้วโดยไม่ต้องใช้ transaction — นี่คือเหตุผลที่ embed ดีกว่า reference ในหลายกรณี</div>
+          </div>
+        </div>
+
+        <!-- Error Codes -->
+        <div class="tab-content hidden" id="errors-tab" style="overflow-y:auto">
+          <div style="font-family:sans-serif">
+            <div style="margin-bottom:18px">
+              <span style="color:#f87171;font-size:15px;font-weight:600">Error Codes ที่พบบ่อย</span>
+              <span style="color:#555;font-size:14px;margin-left:10px">อ่าน error แล้วแก้ได้ทันที</span>
+            </div>
+            <div style="background:#1a1a2e;border:1px solid #3a3a6a;border-radius:8px;padding:14px 16px;margin-bottom:18px;display:flex;gap:12px">
+              <span style="font-size:22px;flex-shrink:0">🔍</span>
+              <div style="font-size:14px;color:#ccc;line-height:1.75">MongoDB errors มีรูปแบบ <code style="background:#0d0d1a;padding:2px 6px;border-radius:3px;color:#4da6ff">{ code: N, codeName: "...", errmsg: "..." }</code><br>รู้ code = รู้สาเหตุ = แก้ได้เร็ว</div>
+            </div>
+            <div style="overflow-x:auto;margin-bottom:18px">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead><tr style="background:#12121f">
+                  <th style="text-align:left;padding:8px 12px;color:#f87171;font-size:14px;border-bottom:1px solid #2a2a4a;white-space:nowrap">Code</th>
+                  <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a;white-space:nowrap">ชื่อ</th>
+                  <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a">สาเหตุ</th>
+                  <th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;border-bottom:1px solid #2a2a4a">วิธีแก้</th>
+                </tr></thead>
+                <tbody>
+                  <tr style="background:#1a0a0a"><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#f87171;font-family:'Courier New',monospace;font-weight:600">11000</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">DuplicateKey</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#aaa">Insert/Update ทำให้ค่า unique index ซ้ำ เช่น email ซ้ำ, _id ซ้ำ</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#28c840">ตรวจค่าก่อน insert | ใช้ upsert | ลบ record เก่าก่อน</td></tr>
+                  <tr><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#f87171;font-family:'Courier New',monospace;font-weight:600">2</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">BadValue</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#aaa">ค่าที่ส่งไม่ถูกต้อง เช่น sort ด้วยค่าที่ไม่ใช่ 1 หรือ -1</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#28c840">ตรวจ type และ range ของค่าที่ส่งเข้า</td></tr>
+                  <tr style="background:#1a0a0a"><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#f87171;font-family:'Courier New',monospace;font-weight:600">13</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">Unauthorized</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#aaa">User ไม่มีสิทธิ์ทำ operation เช่น read-only user พยายาม insert</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#28c840">เพิ่ม role ที่เหมาะสม | ใช้ user ที่มีสิทธิ์</td></tr>
+                  <tr><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#f87171;font-family:'Courier New',monospace;font-weight:600">14</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">TypeMismatch</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#aaa">Type ของค่าไม่ตรง เช่น ส่ง string แทน number</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#28c840">ตรวจ BSON type | แปลง type ก่อนส่ง</td></tr>
+                  <tr style="background:#1a0a0a"><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#f87171;font-family:'Courier New',monospace;font-weight:600">26</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">NamespaceNotFound</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#aaa">Collection หรือ Database ที่ระบุไม่มีอยู่</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#28c840">ตรวจชื่อ collection/db | สร้างก่อนถ้าจำเป็น</td></tr>
+                  <tr><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#f87171;font-family:'Courier New',monospace;font-weight:600">50</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">MaxTimeMSExpired</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#aaa">Query ใช้เวลาเกิน maxTimeMS ที่กำหนด</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#28c840">เพิ่ม index | optimize query | เพิ่ม maxTimeMS</td></tr>
+                  <tr style="background:#1a0a0a"><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#f87171;font-family:'Courier New',monospace;font-weight:600">112</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">WriteConflict</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#aaa">สอง transaction พยายาม write document เดียวกันพร้อมกัน</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#28c840">Retry transaction | ปรับ logic ให้ไม่ชนกัน</td></tr>
+                  <tr><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#f87171;font-family:'Courier New',monospace;font-weight:600">121</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">DocumentValidationFailure</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#aaa">Document ไม่ผ่าน Schema Validation rule</td><td style="padding:8px 12px;border-bottom:1px solid #151525;color:#28c840">ตรวจ field ที่ขาด/ผิด type ตาม validator</td></tr>
+                  <tr style="background:#1a0a0a"><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#f87171;font-family:'Courier New',monospace;font-weight:600">211</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">KeyNotFound</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#aaa">Field ที่ใช้ใน index ไม่มีอยู่ใน document</td><td style="padding:8px 12px;border-bottom:1px solid #2a1a1a;color:#28c840">ใช้ sparse index หรือตรวจ field ก่อน index</td></tr>
+                  <tr><td style="padding:8px 12px;color:#f87171;font-family:'Courier New',monospace;font-weight:600">—</td><td style="padding:8px 12px;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px">Connection refused</td><td style="padding:8px 12px;color:#aaa">เชื่อมต่อ MongoDB ไม่ได้ — service ไม่ทำงาน หรือ port ผิด</td><td style="padding:8px 12px;color:#28c840">ตรวจ mongod service | ตรวจ port 27017 | ตรวจ firewall</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Schema Validation — ป้องกัน Error ตั้งแต่ต้น</div>
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:6px;padding:12px 14px;font-size:14px;line-height:1.9;margin-bottom:12px"><span style="color:#555">// กำหนด validator บน collection เพื่อบังคับ schema</span>
+<span style="color:#dcdcaa">db</span>.<span style="color:#dcdcaa">createCollection</span>(<span style="color:#ce9178">"consents"</span>, {
+  <span style="color:#9cdcfe">validator</span>: {
+    <span style="color:#4da6ff">$jsonSchema</span>: {
+      <span style="color:#9cdcfe">bsonType</span>: <span style="color:#ce9178">"object"</span>,
+      <span style="color:#9cdcfe">required</span>: [<span style="color:#ce9178">"subjectId"</span>, <span style="color:#ce9178">"status"</span>, <span style="color:#ce9178">"purposeId"</span>],
+      <span style="color:#9cdcfe">properties</span>: {
+        <span style="color:#9cdcfe">status</span>: {
+          <span style="color:#9cdcfe">bsonType</span>: <span style="color:#ce9178">"string"</span>,
+          <span style="color:#9cdcfe">enum</span>: [<span style="color:#ce9178">"granted"</span>,<span style="color:#ce9178">"withdrawn"</span>,<span style="color:#ce9178">"denied"</span>,<span style="color:#ce9178">"expired"</span>]
+        },
+        <span style="color:#9cdcfe">withdrawable</span>: { <span style="color:#9cdcfe">bsonType</span>: <span style="color:#ce9178">"bool"</span> }
+      }
+    }
+  },
+  <span style="color:#9cdcfe">validationAction</span>: <span style="color:#ce9178">"error"</span>  <span style="color:#555">// "error"=reject | "warn"=allow+log</span>
+})</div>
+            <div style="background:#1e2a4a;border-left:3px solid #f87171;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#f87171;font-weight:600">เมื่อ insert ไม่ผ่าน validator</span> จะได้ error code <code style="color:#f87171">121 DocumentValidationFailure</code> — ตั้ง validator ไว้ดักข้อมูลผิดพลาดตั้งแต่ต้น ดีกว่าแก้ทีหลัง</div>
+          </div>
+        </div>
+
       </div>
-    </div>
-  </div>
-  <div class="info-bar">
-    <span><span class="status-dot"></span>Connected</span>
-    <span class="sep">|</span><span>localhost:27017</span>
-    <span class="sep">|</span><span id="coll-info">No collection selected</span>
-    <span class="sep">|</span><span id="status-msg" style="margin-left:auto;color:#444">Ready</span>
   </div>
 </div>
 <div id="modal-container"></div>
@@ -1115,7 +1627,7 @@ function renderCheatSheet(filter) {
       html += '<div style="margin-top:10px;margin-bottom:4px">';
       html += '<div style="font-size:10px;color:#555;font-family:sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">&#128269; Filter ที่จะใส่ในช่อง:</div>';
       html += '<div style="display:flex;align-items:center;gap:8px;background:#060610;border:1px solid #2a3a6a;border-radius:6px;padding:7px 10px">';
-      html += '<span style="flex:1;font-family:\'Courier New\',monospace;font-size:12px;color:#4da6ff;word-break:break-all">' + previewText + '</span>';
+      html += '<span style="flex:1;font-family:\'Courier New\',monospace;font-size:14px;color:#4da6ff;word-break:break-all">' + previewText + '</span>';
       html += '<button class="try-btn" style="flex-shrink:0;margin-top:0" onclick="tryCmd(\'' + c.tryColl + '\',\'' + encodeURIComponent(c.tryFilter) + '\')">&#9654; ลองใน Simulator</button>';
       html += '</div>';
       html += '<div style="font-size:10px;color:#444;font-family:sans-serif;margin-top:4px">collection: <span style="color:#3a6a6a">' + c.tryColl + '</span></div>';
@@ -1242,7 +1754,7 @@ function switchTab(name,el){
 }
 
 function switchTabActive(name){
-  ['documents','aggregation','schema','indexes','cheatsheet'].forEach(function(t){
+  ['documents','aggregation','schema','indexes','cheatsheet','nosql','jsonbson','datatypes','design','transaction','errors'].forEach(function(t){
     var el=document.getElementById(t+'-tab');
     if(t===name) el.classList.remove('hidden'); else el.classList.add('hidden');
   });
@@ -1347,18 +1859,18 @@ function renderSchema(){
   var docs=db[currentDb][currentColl], fields={};
   docs.forEach(function(doc){ Object.entries(doc).forEach(function(entry){ var k=entry[0],v=entry[1]; if(!fields[k])fields[k]={types:{},count:0}; fields[k].count++; var t=Array.isArray(v)?'Array':v===null?'Null':typeof v; t=t.charAt(0).toUpperCase()+t.slice(1); fields[k].types[t]=(fields[k].types[t]||0)+1; }); });
   var total=docs.length;
-  var html='<div style="margin-bottom:14px;font-family:sans-serif"><span style="color:#4da6ff;font-size:13px;font-weight:600">'+currentDb+'.'+currentColl+'</span><span style="color:#555;font-size:12px;margin-left:10px">('+total+' docs, '+Object.keys(fields).length+' fields)</span></div>';
-  html+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Field</th><th style="padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Type</th><th style="padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Coverage</th><th style="padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a;text-align:right">%</th></tr></thead><tbody>';
+  var html='<div style="margin-bottom:14px;font-family:sans-serif"><span style="color:#4da6ff;font-size:14px;font-weight:600">'+currentDb+'.'+currentColl+'</span><span style="color:#555;font-size:14px;margin-left:10px">('+total+' docs, '+Object.keys(fields).length+' fields)</span></div>';
+  html+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 0;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Field</th><th style="padding:6px 0;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Type</th><th style="padding:6px 0;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Coverage</th><th style="padding:6px 0;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a;text-align:right">%</th></tr></thead><tbody>';
   Object.entries(fields).forEach(function(entry){ var f=entry[0],info=entry[1]; var pct=Math.round(info.count/total*100); var types=Object.keys(info.types).join(', '); html+='<tr><td style="padding:8px 0;color:#e0e0e0;font-size:12px">'+f+'</td><td style="padding:8px 8px"><span class="schema-type">'+types+'</span></td><td style="padding:8px 8px"><div class="schema-bar-wrap"><div class="schema-bar" style="width:'+pct+'%"></div></div></td><td style="padding:8px 0;text-align:right" class="schema-pct">'+pct+'%</td></tr>'; });
   html+='</tbody></table>';
   document.getElementById('schema-content').innerHTML=html;
 }
 
 function renderIndexes(){
-  var html='<div style="margin-bottom:14px;font-family:sans-serif"><span style="color:#4da6ff;font-size:13px;font-weight:600">'+currentDb+'.'+currentColl+'</span> <span style="color:#555;font-size:12px">Indexes</span></div>';
-  html+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Name</th><th style="padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Definition</th><th style="padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Type</th><th style="padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Unique</th></tr></thead><tbody>';
-  html+='<tr><td style="padding:8px 12px;color:#4da6ff;font-size:12px;border-bottom:1px solid #1e1e38">_id_</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ _id: 1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-blue">Regular</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-green">Yes</span></td></tr>';
-  if(currentColl==='consents'){ html+='<tr><td style="padding:8px 12px;color:#4da6ff;font-size:12px;border-bottom:1px solid #1e1e38">subjectId_1</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ subjectId: 1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-blue">Regular</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-gray">No</span></td></tr><tr><td style="padding:8px 12px;color:#4da6ff;font-size:12px;border-bottom:1px solid #1e1e38">status_1_date_-1</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ status: 1, consentDate: -1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-amber">Compound</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-gray">No</span></td></tr>'; }
+  var html='<div style="margin-bottom:14px;font-family:sans-serif"><span style="color:#4da6ff;font-size:14px;font-weight:600">'+currentDb+'.'+currentColl+'</span> <span style="color:#555;font-size:12px">Indexes</span></div>';
+  html+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px 12px;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Name</th><th style="padding:8px 12px;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Definition</th><th style="padding:8px 12px;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Type</th><th style="padding:8px 12px;color:#555;font-size:14px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Unique</th></tr></thead><tbody>';
+  html+='<tr><td style="padding:8px 12px;color:#4da6ff;font-size:14px;border-bottom:1px solid #1e1e38">_id_</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ _id: 1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-blue">Regular</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-green">Yes</span></td></tr>';
+  if(currentColl==='consents'){ html+='<tr><td style="padding:8px 12px;color:#4da6ff;font-size:14px;border-bottom:1px solid #1e1e38">subjectId_1</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ subjectId: 1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-blue">Regular</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-gray">No</span></td></tr><tr><td style="padding:8px 12px;color:#4da6ff;font-size:14px;border-bottom:1px solid #1e1e38">status_1_date_-1</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ status: 1, consentDate: -1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-amber">Compound</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-gray">No</span></td></tr>'; }
   html+='</tbody></table><div style="margin-top:14px;display:flex;gap:8px"><button class="btn btn-secondary" onclick="openCreateIndex()">&#43; Create Index</button><button class="btn btn-secondary" onclick="showNotif(\'Refreshed\',\'success\')">&#8635; Refresh</button></div>';
   document.getElementById('indexes-content').innerHTML=html;
 }
@@ -1368,13 +1880,13 @@ function createIndexDemo(){ var f=document.getElementById('idx-field').value||'f
 function addStage(){ aggrStages.push({op:'$match',code:'{}'}); renderAggrStages(); }
 function renderAggrStages(){
   var el=document.getElementById('aggr-stages');
-  if(!aggrStages.length){ el.innerHTML='<div style="color:#333;font-size:12px;font-family:sans-serif;padding:8px 0">ยังไม่มี Stage — คลิก "+ Add Stage"</div>'; return; }
+  if(!aggrStages.length){ el.innerHTML='<div style="color:#333;font-size:14px;font-family:sans-serif;padding:8px 0">ยังไม่มี Stage — คลิก "+ Add Stage"</div>'; return; }
   var ops=['$match','$group','$sort','$limit','$skip','$project','$unwind','$count','$addFields'];
-  var html=aggrStages.map(function(s,i){ var opts=ops.map(function(op){return'<option value="'+op+'"'+(s.op===op?' selected':'')+'>'+op+'</option>';}).join(''); return'<div class="aggr-stage"><div class="aggr-stage-header"><select class="aggr-op-select" onchange="aggrStages['+i+'].op=this.value">'+opts+'</select><span style="color:#444;font-size:11px;font-family:sans-serif">Stage '+(i+1)+'</span><button class="btn btn-danger btn-sm" onclick="removeStage('+i+')" style="margin-left:auto">&#215;</button></div><textarea class="aggr-textarea" onchange="aggrStages['+i+'].code=this.value" oninput="aggrStages['+i+'].code=this.value">'+s.code+'</textarea></div>'; }).join('');
+  var html=aggrStages.map(function(s,i){ var opts=ops.map(function(op){return'<option value="'+op+'"'+(s.op===op?' selected':'')+'>'+op+'</option>';}).join(''); return'<div class="aggr-stage"><div class="aggr-stage-header"><select class="aggr-op-select" onchange="aggrStages['+i+'].op=this.value">'+opts+'</select><span style="color:#444;font-size:14px;font-family:sans-serif">Stage '+(i+1)+'</span><button class="btn btn-danger btn-sm" onclick="removeStage('+i+')" style="margin-left:auto">&#215;</button></div><textarea class="aggr-textarea" onchange="aggrStages['+i+'].code=this.value" oninput="aggrStages['+i+'].code=this.value">'+s.code+'</textarea></div>'; }).join('');
   el.innerHTML=html;
 }
 function removeStage(i){ aggrStages.splice(i,1); renderAggrStages(); }
-function clearAggr(){ aggrStages=[]; renderAggrStages(); document.getElementById('aggr-results').innerHTML='<div style="color:#444;font-size:12px;font-family:sans-serif">ผลลัพธ์จะแสดงที่นี่...</div>'; }
+function clearAggr(){ aggrStages=[]; renderAggrStages(); document.getElementById('aggr-results').innerHTML='<div style="color:#444;font-size:14px;font-family:sans-serif">ผลลัพธ์จะแสดงที่นี่...</div>'; }
 
 function runAggr(){
   if(!currentColl){showNotif('กรุณาเลือก Collection ก่อน','error');return;}
@@ -1411,9 +1923,9 @@ function runAggr(){
       }
     });
     var resEl=document.getElementById('aggr-results');
-    resEl.innerHTML='<div style="color:#28c840;font-size:11px;font-family:sans-serif;margin-bottom:8px">&#10003; Pipeline completed — '+docs.length+' document(s)</div><div class="doc-view">'+syntaxHighlight(JSON.stringify(docs,null,2))+'</div>';
+    resEl.innerHTML='<div style="color:#28c840;font-size:14px;font-family:sans-serif;margin-bottom:8px">&#10003; Pipeline completed — '+docs.length+' document(s)</div><div class="doc-view">'+syntaxHighlight(JSON.stringify(docs,null,2))+'</div>';
     showNotif('Pipeline ran — '+docs.length+' results','success');
-  }catch(e){ document.getElementById('aggr-results').innerHTML='<div style="color:#e24b4a;font-size:12px;font-family:sans-serif">&#9888; Error: '+e.message+'</div>';showNotif('Error: '+e.message,'error'); }
+  }catch(e){ document.getElementById('aggr-results').innerHTML='<div style="color:#e24b4a;font-size:14px;font-family:sans-serif">&#9888; Error: '+e.message+'</div>';showNotif('Error: '+e.message,'error'); }
 }
 
 function showModal(content){ var bg=document.createElement('div');bg.className='modal-bg';bg.id='modal-bg';bg.innerHTML='<div class="modal">'+content+'</div>';bg.addEventListener('click',function(e){if(e.target===bg)closeModal();});document.body.appendChild(bg); }
