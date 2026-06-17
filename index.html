@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MongoDB Compass Simulator — Consent Management</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Courier New',monospace;font-size:13px;background:#0d0d1a;color:#e0e0e0;height:100vh;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh;background:#1a1a2e}
+.titlebar{background:#12121f;padding:8px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #2a2a4a;user-select:none}
+.dot{width:12px;height:12px;border-radius:50%}
+.dot-r{background:#ff5f57}.dot-y{background:#ffbd2e}.dot-g{background:#28c840}
+.titlebar-title{color:#888;font-size:12px;margin-left:8px;flex:1}
+.version-badge{background:#1e2a4a;color:#4da6ff;font-size:10px;padding:2px 8px;border-radius:10px}
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:240px;background:#12121f;border-right:1px solid #2a2a4a;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.sidebar-section{padding:8px 0}
+.sidebar-header{padding:6px 16px;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.1em;font-family:sans-serif}
+.conn-item{padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#aaa;font-size:12px;font-family:sans-serif;transition:background .15s;border-left:2px solid transparent}
+.conn-item.active{background:#1e2a4a;color:#4da6ff;border-left-color:#4da6ff}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:#28c840;flex-shrink:0}
+.db-item{padding:6px 16px 6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;color:#aaa;font-size:12px;font-family:sans-serif;transition:background .15s}
+.db-item:hover{background:#1e1e38}
+.db-item.active{color:#4da6ff}
+.coll-item{padding:4px 16px 4px 36px;cursor:pointer;font-size:12px;color:#777;font-family:sans-serif;transition:background .15s;display:flex;align-items:center;gap:6px}
+.coll-item:hover{background:#1e1e38;color:#aaa}
+.coll-item.active{color:#e0e0e0;background:#1e2a4a}
+.coll-count{margin-left:auto;color:#444;font-size:10px;background:#1e1e38;padding:1px 6px;border-radius:8px}
+.sidebar-divider{border:none;border-top:1px solid #1e1e38;margin:8px 0}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;background:#12121f;border-bottom:1px solid #2a2a4a;padding:0 12px;overflow-x:auto}
+.tabs::-webkit-scrollbar{height:0}
+.tab{padding:9px 14px;font-size:12px;cursor:pointer;color:#666;border-bottom:2px solid transparent;transition:all .15s;font-family:sans-serif;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:#aaa}
+.tab.active{color:#4da6ff;border-bottom-color:#4da6ff}
+.tab-content{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px;gap:8px}
+.tab-content.hidden{display:none}
+.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.filter-input{background:#0d0d1a;border:1px solid #2a2a4a;border-radius:5px;padding:6px 10px;color:#e0e0e0;font-family:'Courier New',monospace;font-size:12px;transition:border .15s}
+.filter-input:focus{outline:none;border-color:#4da6ff;background:#0a0a18}
+.filter-main{flex:1;min-width:180px}
+.filter-proj{width:180px}
+.btn{padding:5px 12px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-weight:500;font-family:sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:#4da6ff;color:#000}.btn-primary:hover{background:#6bb8ff}
+.btn-success{background:#28c840;color:#000}.btn-success:hover{background:#3ada53}
+.btn-danger{background:#c0392b;color:#fff}.btn-danger:hover{background:#e74c3c}
+.btn-secondary{background:#1e1e38;color:#aaa;border:1px solid #2a2a4a}.btn-secondary:hover{background:#252540;color:#ccc}
+.btn-warn{background:#e67e22;color:#fff}.btn-warn:hover{background:#f39c12}
+.btn-sm{padding:3px 8px;font-size:11px}
+.stats{display:flex;gap:16px;font-size:11px;color:#555;font-family:sans-serif;flex-shrink:0}
+.table-wrap{flex:1;overflow:auto;border:1px solid #1e1e38;border-radius:6px}
+.table-wrap::-webkit-scrollbar{width:6px;height:6px}
+.table-wrap::-webkit-scrollbar-thumb{background:#2a2a4a;border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{position:sticky;top:0;background:#12121f;z-index:2}
+th{padding:8px 12px;text-align:left;color:#666;font-weight:500;font-family:sans-serif;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:6px 12px;border-bottom:1px solid #151525;vertical-align:middle;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover td{background:#1a1a2e;cursor:pointer}
+.val-str{color:#ce9178}.val-num{color:#b5cea8}.val-bool{color:#569cd6}.val-id{color:#6a9955;font-size:11px}.val-null{color:#444}.val-obj{color:#4ec9b0}.val-arr{color:#dcdcaa}
+.action-cell{white-space:nowrap}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px)}
+.modal{background:#1a1a2e;border:1px solid #3a3a6a;border-radius:10px;padding:20px;width:520px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.modal h3{color:#4da6ff;margin-bottom:16px;font-size:14px;font-family:sans-serif;display:flex;align-items:center;gap:8px}
+.modal label{display:block;font-size:11px;color:#666;margin-bottom:4px;margin-top:12px;font-family:sans-serif;text-transform:uppercase;letter-spacing:.05em}
+.modal input,.modal textarea,.modal select{width:100%;background:#0d0d1a;border:1px solid #2a2a4a;border-radius:5px;padding:7px 10px;color:#e0e0e0;font-family:'Courier New',monospace;font-size:12px;transition:border .15s}
+.modal input:focus,.modal textarea:focus,.modal select:focus{outline:none;border-color:#4da6ff}
+.modal textarea{height:120px;resize:vertical}
+.modal-btns{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.modal-err{color:#e24b4a;font-size:11px;margin-top:6px;font-family:sans-serif}
+.doc-view{background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:12px;font-family:'Courier New',monospace;font-size:12px;white-space:pre;overflow:auto;max-height:380px;line-height:1.6}
+.doc-view::-webkit-scrollbar{width:4px}
+.doc-view::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.aggr-stage{background:#0d0d1a;border:1px solid #2a2a4a;border-radius:6px;padding:10px;margin-bottom:8px}
+.aggr-stage-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.aggr-op-select{background:#12121f;border:1px solid #3a3a6a;border-radius:4px;padding:4px 8px;color:#4da6ff;font-size:12px;cursor:pointer;font-family:'Courier New',monospace}
+.aggr-op-select:focus{outline:none}
+.aggr-textarea{width:100%;background:#060610;border:1px solid #1e1e38;border-radius:4px;padding:6px;color:#e0e0e0;font-family:'Courier New',monospace;font-size:11px;height:70px;resize:vertical}
+.aggr-textarea:focus{outline:none;border-color:#4da6ff}
+.aggr-results{flex:1;overflow:auto;border:1px solid #1e1e38;border-radius:6px;padding:10px}
+.schema-field{padding:8px 0;border-bottom:1px solid #1a1a2e;display:flex;align-items:center;gap:10px;font-size:12px}
+.schema-type{background:#1e2a4a;color:#4da6ff;padding:2px 8px;border-radius:4px;font-size:10px;font-family:sans-serif;white-space:nowrap}
+.schema-bar-wrap{flex:1;background:#1e1e38;border-radius:3px;height:5px}
+.schema-bar{background:#4da6ff;height:5px;border-radius:3px}
+.schema-pct{color:#555;font-size:11px;flex:0 0 35px;text-align:right;font-family:sans-serif}
+.badge{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;font-family:sans-serif}
+.badge-green{background:#0d2a0d;color:#28c840;border:1px solid #1a4a1a}
+.badge-blue{background:#0a1a3a;color:#4da6ff;border:1px solid #1a3a6a}
+.badge-red{background:#3a0d0d;color:#e24b4a;border:1px solid #5a1a1a}
+.badge-amber{background:#2a1a0d;color:#ffbd2e;border:1px solid #4a3a1a}
+.badge-gray{background:#1e1e2a;color:#888;border:1px solid #2a2a3a}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:#555}
+.welcome h2{color:#3a3a6a;font-size:18px;font-family:sans-serif;font-weight:400}
+.welcome p{font-size:12px;font-family:sans-serif;text-align:center;line-height:1.7;max-width:300px}
+.welcome-hint{background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:12px 16px;font-size:11px;color:#555;font-family:sans-serif;line-height:2}
+.welcome-hint b{color:#4da6ff}
+.info-bar{padding:5px 14px;background:#0a0a1a;font-size:11px;color:#444;border-top:1px solid #1e1e38;display:flex;gap:16px;align-items:center;font-family:sans-serif}
+.info-bar .sep{color:#1e1e38}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#28c840;display:inline-block;margin-right:5px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:#333;gap:8px;padding:40px;font-family:sans-serif}
+.notif{position:fixed;bottom:40px;right:20px;background:#1e2a4a;border:1px solid #3a4a8a;border-radius:8px;padding:10px 16px;font-size:12px;font-family:sans-serif;color:#e0e0e0;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);transition:opacity .3s}
+.notif.success{border-color:#1a4a1a;background:#0d2a0d;color:#28c840}
+.notif.error{border-color:#5a1a1a;background:#2a0d0d;color:#e24b4a}
+.notif.warning{border-color:#4a3a1a;background:#2a1a0d;color:#ffbd2e}
+.aggr-hint{background:#0d0d1a;border:1px solid #1e1e38;border-radius:6px;padding:10px;font-size:11px;color:#555;font-family:sans-serif;margin-bottom:10px}
+.aggr-hint code{color:#4da6ff;background:#0a0a18;padding:1px 4px;border-radius:3px;font-size:11px}
+.aggr-toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+
+/* ===== CHEATSHEET STYLES ===== */
+.cheat-wrap{flex:1;overflow-y:auto;padding-bottom:16px}
+.cheat-wrap::-webkit-scrollbar{width:6px}
+.cheat-wrap::-webkit-scrollbar-thumb{background:#2a2a4a;border-radius:3px}
+.cheat-cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.cheat-cat-btn{padding:5px 12px;border-radius:20px;border:1px solid #2a2a4a;background:#0d0d1a;color:#888;font-size:11px;font-family:sans-serif;cursor:pointer;transition:all .15s}
+.cheat-cat-btn:hover{border-color:#4da6ff;color:#4da6ff}
+.cheat-cat-btn.active{background:#1e2a4a;color:#4da6ff;border-color:#4da6ff}
+.cheat-section{margin-bottom:20px}
+.cheat-section-title{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.1em;font-family:sans-serif;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e1e38}
+.cheat-card{background:#0d0d1a;border:1px solid #1e1e38;border-radius:8px;margin-bottom:10px;overflow:hidden;transition:border .2s}
+.cheat-card:hover{border-color:#2a2a5a}
+.cheat-card-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none}
+.cheat-card-header:hover{background:#111128}
+.cheat-title{font-family:sans-serif;font-size:13px;color:#e0e0e0;font-weight:500;flex:1}
+.cheat-desc{font-family:sans-serif;font-size:11px;color:#666;margin-top:2px}
+.cheat-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-family:sans-serif;font-weight:600;flex-shrink:0}
+.cb-find{background:#0a1a3a;color:#4da6ff;border:1px solid #1a3a6a}
+.cb-write{background:#0a2a0a;color:#28c840;border:1px solid #1a4a1a}
+.cb-aggr{background:#2a1a0a;color:#ffbd2e;border:1px solid #4a3a1a}
+.cb-index{background:#1a0a2a;color:#c084fc;border:1px solid #3a1a5a}
+.cb-ops{background:#2a0a1a;color:#f472b6;border:1px solid #5a1a3a}
+.cb-admin{background:#0a2a2a;color:#2dd4bf;border:1px solid #1a4a4a}
+.cb-security{background:#2a1a0a;color:#fb923c;border:1px solid #5a3a1a}
+.cheat-arrow{color:#444;font-size:12px;transition:transform .2s}
+.cheat-arrow.open{transform:rotate(90deg)}
+.cheat-body{padding:0 14px 14px;display:none}
+.cheat-body.open{display:block}
+.cheat-code{background:#060610;border:1px solid #1a1a38;border-radius:6px;padding:10px 12px;font-family:'Courier New',monospace;font-size:12px;line-height:1.8;margin:8px 0;position:relative;overflow-x:auto;white-space:pre-wrap}
+.cheat-code::-webkit-scrollbar{height:4px}
+.cheat-code::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.copy-btn{position:absolute;top:6px;right:6px;background:#1e1e38;border:1px solid #2a2a4a;border-radius:4px;color:#888;font-size:10px;padding:2px 8px;cursor:pointer;font-family:sans-serif;transition:all .15s}
+.copy-btn:hover{background:#2a2a50;color:#4da6ff}
+.try-btn{background:#1e2a4a;border:1px solid #2a3a6a;border-radius:4px;color:#4da6ff;font-size:10px;padding:3px 10px;cursor:pointer;font-family:sans-serif;font-weight:600;margin-top:6px;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+.try-btn:hover{background:#253560}
+.cheat-note{font-family:sans-serif;font-size:11px;color:#666;line-height:1.7;margin-top:6px}
+.cheat-note b{color:#aaa}
+.cheat-note code{color:#ce9178;background:#0a0a18;padding:1px 4px;border-radius:3px;font-family:'Courier New',monospace;font-size:11px}
+.cheat-explain{margin-top:10px;border-top:1px solid #1e1e38;padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.cheat-explain-row{font-family:sans-serif;font-size:12px;color:#888;line-height:1.6;padding:5px 10px;background:#060610;border-radius:5px;border-left:2px solid #2a3a6a}
+.cheat-explain-row b{color:#ccc}
+.cheat-explain-row code{color:#ce9178;background:#0d0d22;padding:1px 5px;border-radius:3px;font-family:'Courier New',monospace;font-size:11px}
+.hl-key{color:#9cdcfe}
+.hl-str{color:#ce9178}
+.hl-num{color:#b5cea8}
+.hl-bool{color:#569cd6}
+.hl-op{color:#4da6ff}
+.hl-cmt{color:#555;font-style:italic}
+.hl-fn{color:#dcdcaa}
+.hl-field{color:#e0e0e0}
+
+.cheat-block{margin:8px 0}
+.cheat-block-header{font-family:sans-serif;font-size:11px;font-weight:600;color:#4da6ff;background:#0a1a2a;border-left:3px solid #4da6ff;padding:5px 10px;border-radius:4px 4px 0 0;margin-bottom:0;letter-spacing:.02em}
+.cheat-block-why{font-family:sans-serif;font-size:11px;color:#888;background:#060e1a;padding:5px 10px 6px;border-left:3px solid #4da6ff;line-height:1.6}
+.cheat-block-why b{color:#aaa}
+.cheat-block-why code{color:#ce9178;background:#0a0a18;padding:1px 4px;border-radius:3px;font-family:'Courier New',monospace;font-size:11px}
+.cheat-block-code{background:#060610;border:1px solid #1a1a38;border-left:3px solid #2a3a4a;border-radius:0 0 5px 5px;padding:8px 12px;font-family:'Courier New',monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;overflow-x:auto;margin-bottom:12px}
+
+
+/* ===== READABILITY UPGRADE (Thai-friendly font & spacing) ===== */
+:root{
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Thai", "Noto Sans", "Tahoma", "Arial", sans-serif;
+  --font-code: "SFMono-Regular", "Cascadia Mono", "Consolas", "Liberation Mono", "Courier New", monospace;
+}
+body{
+  font-family:var(--font-ui);
+  font-size:14px;
+  line-height:1.55;
+  letter-spacing:.01em;
+}
+.titlebar-title,.conn-item,.sidebar-header,.db-item,.coll-item,.tab,.btn,.stats,.modal h3,.modal label,.modal input,.modal select,.modal-err,.welcome p,.welcome-hint,.info-bar,.empty-state,.notif,.aggr-hint,.cheat-cat-btn,.cheat-title,.cheat-desc,.cheat-badge,.cheat-note,.cheat-explain-row,.cheat-block-header,.cheat-block-why{
+  font-family:var(--font-ui) !important;
+}
+.filter-input,.modal textarea,.doc-view,.aggr-textarea,.aggr-op-select,.cheat-code,.cheat-block-code,code,table{
+  font-family:var(--font-code) !important;
+}
+.sidebar{width:270px;}
+.sidebar-header{font-size:11px;color:#74748a;}
+.conn-item{font-size:13px;line-height:1.45;}
+.db-item{font-size:13px;padding:8px 16px 8px 12px;}
+.coll-item{font-size:13px;padding:6px 16px 6px 38px;}
+.coll-count{font-size:11px;}
+.tab{font-size:13px;padding:11px 16px;}
+.tab-content{padding:14px;gap:10px;}
+.filter-input{font-size:13px;padding:8px 11px;}
+.btn{font-size:13px;padding:7px 13px;}
+.btn-sm{font-size:12px;padding:5px 9px;}
+.stats{font-size:12px;color:#77778a;}
+table{font-size:13px;line-height:1.5;}
+th{font-size:12px;padding:10px 13px;color:#828296;}
+td{font-size:13px;padding:9px 13px;max-width:240px;}
+.val-id{font-size:12px;}
+.modal{width:580px;}
+.modal h3{font-size:16px;}
+.modal label{font-size:12px;color:#77778a;}
+.modal input,.modal textarea,.modal select{font-size:13px;line-height:1.55;padding:9px 11px;}
+.modal textarea{height:150px;}
+.doc-view{font-size:13px;line-height:1.75;}
+.aggr-textarea{font-size:13px;line-height:1.6;height:86px;}
+.aggr-hint{font-size:12px;line-height:1.75;color:#77778a;}
+.welcome h2{font-size:22px;}
+.welcome p{font-size:14px;color:#77778a;}
+.welcome-hint{font-size:13px;line-height:2.05;color:#77778a;}
+.info-bar{font-size:12px;}
+.cheat-cat-btn{font-size:12px;padding:7px 13px;}
+.cheat-card-header{padding:13px 15px;}
+.cheat-title{font-size:14px;}
+.cheat-desc{font-size:12px;color:#77778a;line-height:1.55;}
+.cheat-badge{font-size:11px;}
+.cheat-body{padding:0 15px 16px;}
+.cheat-code,.cheat-block-code{font-size:13px;line-height:1.85;}
+.cheat-note,.cheat-block-why{font-size:12px;line-height:1.75;}
+.cheat-explain-row{font-size:13px;line-height:1.65;}
+.copy-btn,.try-btn{font-family:var(--font-ui) !important;font-size:11px;}
+.schema-type,.schema-pct{font-size:12px;}
+.notif{font-size:13px;line-height:1.5;}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="titlebar">
+    <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+    <span class="titlebar-title">&#9670; MongoDB Compass — localhost:27017</span>
+    <span class="version-badge">v1.40 Simulator — Readable Thai Font</span>
+  </div>
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-header">Connections</div>
+        <div class="conn-item active">
+          <div class="conn-dot"></div>
+          <div><div style="color:#e0e0e0;font-weight:600;font-size:12px">localhost:27017</div><div style="font-size:10px;color:#555">MongoDB 7.0.5 &bull; Standalone</div></div>
+        </div>
+      </div>
+      <hr class="sidebar-divider">
+      <div class="sidebar-section">
+        <div class="sidebar-header">Databases</div>
+        <div id="db-list"></div>
+      </div>
+    </div>
+    <div class="content" id="content-area">
+      <div class="welcome" id="welcome-screen">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="56" height="56">
+          <ellipse cx="30" cy="12" rx="22" ry="8" fill="#1e2a4a" stroke="#3a5a9a" stroke-width="1.5"/>
+          <path d="M8 12 Q8 28 30 28 Q52 28 52 12" stroke="#3a5a9a" stroke-width="1.5" fill="#12121f"/>
+          <ellipse cx="30" cy="28" rx="22" ry="8" fill="#1e2a4a" stroke="#3a5a9a" stroke-width="1.5"/>
+          <path d="M8 28 Q8 44 30 44 Q52 44 52 28" stroke="#3a5a9a" stroke-width="1.5" fill="#12121f"/>
+          <ellipse cx="30" cy="44" rx="22" ry="8" fill="#1e2a4a" stroke="#3a5a9a" stroke-width="1.5"/>
+        </svg>
+        <h2>Consent Management DB</h2>
+        <p>เลือก Collection จากแถบด้านซ้าย หรือดูคู่มือคำสั่งที่แท็บ <b style="color:#4da6ff">&#128218; Cheat Sheet</b></p>
+        <div class="welcome-hint">
+          <b>consentdb</b><br>
+          &#9670; <b>consents</b> — บันทึกความยินยอม<br>
+          &#9670; <b>consent_logs</b> — ประวัติการเปลี่ยนแปลง<br>
+          &#9670; <b>data_subjects</b> — ข้อมูลเจ้าของข้อมูล<br>
+          &#9670; <b>purposes</b> — วัตถุประสงค์การประมวลผล<br>
+          &#9670; <b>consent_requests</b> — คำขอความยินยอม
+        </div>
+      </div>
+      <div style="display:none;flex:1;flex-direction:column;overflow:hidden" id="main-view">
+        <div class="tabs" id="tab-bar">
+          <div class="tab active" onclick="switchTab('documents',this)">Documents</div>
+          <div class="tab" onclick="switchTab('aggregation',this)">Aggregations</div>
+          <div class="tab" onclick="switchTab('schema',this)">Schema</div>
+          <div class="tab" onclick="switchTab('indexes',this)">Indexes</div>
+          <div class="tab" onclick="switchTab('cheatsheet',this)" style="color:#ffbd2e">&#128218; Cheat Sheet</div>
+        </div>
+
+        <!-- Documents -->
+        <div class="tab-content" id="documents-tab">
+          <div class="toolbar">
+            <input class="filter-input filter-main" id="filter-input" placeholder='Filter: { "status": "granted" } | { "consentDate": { "$gte": "2024-01-01" } }'/>
+            <input class="filter-input filter-proj" id="proj-input" placeholder='Projection: { "subjectId": 1 }'/>
+            <button class="btn btn-primary" onclick="applyFilter()">&#9654; Find</button>
+            <button class="btn btn-secondary" onclick="resetFilter()">&#10006; Reset</button>
+            <button class="btn btn-success" onclick="openInsert()">&#43; Insert</button>
+            <button class="btn btn-secondary" onclick="exportDocs()">&#8595; Export JSON</button>
+          </div>
+          <div class="stats" id="stats-bar"><span>เลือก Collection เพื่อดูข้อมูล</span></div>
+          <div class="table-wrap" id="table-wrap"><div class="empty-state">กรุณาเลือก Collection</div></div>
+        </div>
+
+        <!-- Aggregation -->
+        <div class="tab-content hidden" id="aggregation-tab">
+          <div class="aggr-hint">
+            <b style="color:#4da6ff">Aggregation Pipeline</b> — ตัวอย่างสำหรับ Consent<br>
+            นับ consent ตาม purpose: <code>{ _id: "$purposeId", total: { "$sum": 1 } }</code> &nbsp;|&nbsp;
+            กรองสถานะ: <code>{ "status": "granted" }</code>
+          </div>
+          <div class="aggr-toolbar">
+            <button class="btn btn-secondary" onclick="addStage()">&#43; Add Stage</button>
+            <button class="btn btn-primary" onclick="runAggr()">&#9654; Run Pipeline</button>
+            <button class="btn btn-secondary" onclick="clearAggr()">&#10006; Clear</button>
+          </div>
+          <div id="aggr-stages" style="overflow-y:auto;max-height:280px"></div>
+          <div class="aggr-results" id="aggr-results"><div style="color:#444;font-size:12px;font-family:sans-serif">ผลลัพธ์จะแสดงที่นี่...</div></div>
+        </div>
+
+        <!-- Schema -->
+        <div class="tab-content hidden" id="schema-tab"><div id="schema-content"></div></div>
+
+        <!-- Indexes -->
+        <div class="tab-content hidden" id="indexes-tab"><div id="indexes-content"></div></div>
+
+        <!-- Cheat Sheet -->
+        <div class="tab-content hidden" id="cheatsheet-tab">
+          <div class="cheat-cat-tabs" id="cheat-cats">
+            <button class="cheat-cat-btn active" onclick="filterCheat('all',this)">&#127381; ทั้งหมด</button>
+            <button class="cheat-cat-btn" onclick="filterCheat('find',this)">&#128269; Query / Find</button>
+            <button class="cheat-cat-btn" onclick="filterCheat('write',this)">&#9998; Write Operations</button>
+            <button class="cheat-cat-btn" onclick="filterCheat('aggr',this)">&#128200; Aggregation</button>
+            <button class="cheat-cat-btn" onclick="filterCheat('index',this)">&#9883; Indexes</button>
+            <button class="cheat-cat-btn" onclick="filterCheat('ops',this)">&#128295; Query Operators</button>
+            <button class="cheat-cat-btn" onclick="filterCheat('admin',this)">&#9881; Replica / Sharding</button>
+            <button class="cheat-cat-btn" onclick="filterCheat('security',this)">&#128274; Backup / Security</button>
+          </div>
+          <div class="cheat-wrap" id="cheat-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="info-bar">
+    <span><span class="status-dot"></span>Connected</span>
+    <span class="sep">|</span><span>localhost:27017</span>
+    <span class="sep">|</span><span id="coll-info">No collection selected</span>
+    <span class="sep">|</span><span id="status-msg" style="margin-left:auto;color:#444">Ready</span>
+  </div>
+</div>
+<div id="modal-container"></div>
+
+<script>
+// ===== DATA =====
+var db = {
+  consentdb: {
+    consents: [
+      {_id:"con001",subjectId:"sub001",subjectName:"สมชาย ใจดี",email:"somchai@example.com",purposeId:"pur001",purposeName:"การตลาดและโปรโมชัน",status:"granted",channel:"web",version:"2.1",consentDate:"2024-01-15T09:23:11Z",expiryDate:"2025-01-15T00:00:00Z",ipAddress:"203.150.10.1",userAgent:"Chrome/120",withdrawable:true,proof:"hash_a1b2c3"},
+      {_id:"con002",subjectId:"sub001",subjectName:"สมชาย ใจดี",email:"somchai@example.com",purposeId:"pur002",purposeName:"การวิเคราะห์และสถิติ",status:"granted",channel:"web",version:"2.1",consentDate:"2024-01-15T09:23:15Z",expiryDate:"2025-01-15T00:00:00Z",ipAddress:"203.150.10.1",userAgent:"Chrome/120",withdrawable:true,proof:"hash_d4e5f6"},
+      {_id:"con003",subjectId:"sub002",subjectName:"วิไล สวยงาม",email:"wilai@example.com",purposeId:"pur001",purposeName:"การตลาดและโปรโมชัน",status:"withdrawn",channel:"mobile_app",version:"2.0",consentDate:"2023-11-01T14:10:00Z",expiryDate:"2024-11-01T00:00:00Z",withdrawDate:"2024-03-20T08:00:00Z",ipAddress:"171.101.20.5",userAgent:"iOS/17",withdrawable:true,proof:"hash_g7h8i9"},
+      {_id:"con004",subjectId:"sub002",subjectName:"วิไล สวยงาม",email:"wilai@example.com",purposeId:"pur003",purposeName:"การแบ่งปันข้อมูลกับบุคคลที่สาม",status:"denied",channel:"mobile_app",version:"2.0",consentDate:"2023-11-01T14:10:05Z",expiryDate:null,ipAddress:"171.101.20.5",userAgent:"iOS/17",withdrawable:false,proof:"hash_j1k2l3"},
+      {_id:"con005",subjectId:"sub003",subjectName:"ประยุทธ์ มั่นคง",email:"prayut@example.com",purposeId:"pur001",purposeName:"การตลาดและโปรโมชัน",status:"granted",channel:"email_link",version:"2.1",consentDate:"2024-02-10T11:45:00Z",expiryDate:"2025-02-10T00:00:00Z",ipAddress:"49.228.5.100",userAgent:"Outlook",withdrawable:true,proof:"hash_m4n5o6"},
+      {_id:"con006",subjectId:"sub003",subjectName:"ประยุทธ์ มั่นคง",email:"prayut@example.com",purposeId:"pur002",purposeName:"การวิเคราะห์และสถิติ",status:"granted",channel:"email_link",version:"2.1",consentDate:"2024-02-10T11:45:03Z",expiryDate:"2025-02-10T00:00:00Z",ipAddress:"49.228.5.100",userAgent:"Outlook",withdrawable:true,proof:"hash_p7q8r9"},
+      {_id:"con007",subjectId:"sub004",subjectName:"สุดา ดีใจ",email:"suda@example.com",purposeId:"pur001",purposeName:"การตลาดและโปรโมชัน",status:"granted",channel:"web",version:"2.1",consentDate:"2024-03-05T16:00:00Z",expiryDate:"2025-03-05T00:00:00Z",ipAddress:"110.77.200.88",userAgent:"Firefox/123",withdrawable:true,proof:"hash_s1t2u3"},
+      {_id:"con008",subjectId:"sub004",subjectName:"สุดา ดีใจ",email:"suda@example.com",purposeId:"pur003",purposeName:"การแบ่งปันข้อมูลกับบุคคลที่สาม",status:"granted",channel:"web",version:"2.1",consentDate:"2024-03-05T16:00:05Z",expiryDate:"2025-03-05T00:00:00Z",ipAddress:"110.77.200.88",userAgent:"Firefox/123",withdrawable:true,proof:"hash_v4w5x6"},
+      {_id:"con009",subjectId:"sub005",subjectName:"มนตรี รวยดี",email:"montri@example.com",purposeId:"pur001",purposeName:"การตลาดและโปรโมชัน",status:"expired",channel:"web",version:"1.5",consentDate:"2022-06-01T08:00:00Z",expiryDate:"2023-06-01T00:00:00Z",ipAddress:"125.25.100.55",userAgent:"Chrome/100",withdrawable:false,proof:"hash_y7z8a9"},
+      {_id:"con010",subjectId:"sub005",subjectName:"มนตรี รวยดี",email:"montri@example.com",purposeId:"pur002",purposeName:"การวิเคราะห์และสถิติ",status:"granted",channel:"web",version:"2.1",consentDate:"2024-04-01T10:30:00Z",expiryDate:"2025-04-01T00:00:00Z",ipAddress:"125.25.100.55",userAgent:"Chrome/123",withdrawable:true,proof:"hash_b1c2d3"},
+    ],
+    consent_logs: [
+      {_id:"log001",consentId:"con003",subjectId:"sub002",action:"withdraw",purposeId:"pur001",previousStatus:"granted",newStatus:"withdrawn",actionDate:"2024-03-20T08:00:00Z",actionBy:"subject",channel:"mobile_app",reason:"ไม่ต้องการรับการตลาดอีกต่อไป",ipAddress:"171.101.20.5"},
+      {_id:"log002",consentId:"con001",subjectId:"sub001",action:"grant",purposeId:"pur001",previousStatus:null,newStatus:"granted",actionDate:"2024-01-15T09:23:11Z",actionBy:"subject",channel:"web",reason:null,ipAddress:"203.150.10.1"},
+      {_id:"log003",consentId:"con002",subjectId:"sub001",action:"grant",purposeId:"pur002",previousStatus:null,newStatus:"granted",actionDate:"2024-01-15T09:23:15Z",actionBy:"subject",channel:"web",reason:null,ipAddress:"203.150.10.1"},
+      {_id:"log004",consentId:"con009",subjectId:"sub005",action:"expire",purposeId:"pur001",previousStatus:"granted",newStatus:"expired",actionDate:"2023-06-01T00:00:00Z",actionBy:"system",channel:"system",reason:"Consent expired",ipAddress:null},
+      {_id:"log005",consentId:"con010",subjectId:"sub005",action:"grant",purposeId:"pur002",previousStatus:null,newStatus:"granted",actionDate:"2024-04-01T10:30:00Z",actionBy:"subject",channel:"web",reason:null,ipAddress:"125.25.100.55"},
+      {_id:"log006",consentId:"con007",subjectId:"sub004",action:"grant",purposeId:"pur001",previousStatus:null,newStatus:"granted",actionDate:"2024-03-05T16:00:00Z",actionBy:"subject",channel:"web",reason:null,ipAddress:"110.77.200.88"},
+      {_id:"log007",consentId:"con008",subjectId:"sub004",action:"grant",purposeId:"pur003",previousStatus:null,newStatus:"granted",actionDate:"2024-03-05T16:00:05Z",actionBy:"subject",channel:"web",reason:null,ipAddress:"110.77.200.88"},
+    ],
+    data_subjects: [
+      {_id:"sub001",name:"สมชาย ใจดี",email:"somchai@example.com",phone:"081-234-5678",nationality:"Thai",dateOfBirth:"1990-05-12",registeredAt:"2024-01-15T09:20:00Z",lastActivity:"2024-04-10T14:00:00Z",preferredChannel:"web",isMinor:false,guardianId:null,activeConsents:2,totalConsents:2},
+      {_id:"sub002",name:"วิไล สวยงาม",email:"wilai@example.com",phone:"089-876-5432",nationality:"Thai",dateOfBirth:"1985-11-28",registeredAt:"2023-11-01T14:00:00Z",lastActivity:"2024-03-20T08:05:00Z",preferredChannel:"mobile_app",isMinor:false,guardianId:null,activeConsents:0,totalConsents:2},
+      {_id:"sub003",name:"ประยุทธ์ มั่นคง",email:"prayut@example.com",phone:"062-111-2233",nationality:"Thai",dateOfBirth:"1978-03-07",registeredAt:"2024-02-10T11:40:00Z",lastActivity:"2024-02-10T11:50:00Z",preferredChannel:"email_link",isMinor:false,guardianId:null,activeConsents:2,totalConsents:2},
+      {_id:"sub004",name:"สุดา ดีใจ",email:"suda@example.com",phone:"095-555-6677",nationality:"Thai",dateOfBirth:"1995-07-20",registeredAt:"2024-03-05T15:55:00Z",lastActivity:"2024-04-15T09:00:00Z",preferredChannel:"web",isMinor:false,guardianId:null,activeConsents:2,totalConsents:2},
+      {_id:"sub005",name:"มนตรี รวยดี",email:"montri@example.com",phone:"087-999-0001",nationality:"Thai",dateOfBirth:"1970-12-01",registeredAt:"2022-06-01T07:50:00Z",lastActivity:"2024-04-01T10:35:00Z",preferredChannel:"web",isMinor:false,guardianId:null,activeConsents:1,totalConsents:3},
+    ],
+    purposes: [
+      {_id:"pur001",name:"การตลาดและโปรโมชัน",nameEn:"Marketing & Promotions",category:"marketing",legalBasis:"consent",description:"ใช้ข้อมูลเพื่อส่งโปรโมชัน ข่าวสาร และข้อเสนอพิเศษ",dataTypes:["email","name","purchase_history"],retentionPeriod:365,thirdPartySharing:false,isRequired:false,active:true,version:"2.1",createdAt:"2022-01-01"},
+      {_id:"pur002",name:"การวิเคราะห์และสถิติ",nameEn:"Analytics & Statistics",category:"analytics",legalBasis:"consent",description:"วิเคราะห์พฤติกรรมการใช้งานเพื่อปรับปรุงบริการ",dataTypes:["usage_data","device_info","location"],retentionPeriod:730,thirdPartySharing:false,isRequired:false,active:true,version:"2.1",createdAt:"2022-01-01"},
+      {_id:"pur003",name:"การแบ่งปันข้อมูลกับบุคคลที่สาม",nameEn:"Third-Party Data Sharing",category:"sharing",legalBasis:"consent",description:"แบ่งปันข้อมูลกับพันธมิตรทางธุรกิจที่ผ่านการตรวจสอบ",dataTypes:["name","email","purchase_history"],retentionPeriod:180,thirdPartySharing:true,isRequired:false,active:true,version:"2.1",createdAt:"2023-06-01"},
+      {_id:"pur004",name:"การให้บริการหลัก",nameEn:"Core Service Delivery",category:"service",legalBasis:"contract",description:"ประมวลผลข้อมูลที่จำเป็นสำหรับการให้บริการตามสัญญา",dataTypes:["name","email","address","payment"],retentionPeriod:2555,thirdPartySharing:false,isRequired:true,active:true,version:"1.0",createdAt:"2020-01-01"},
+    ],
+    consent_requests: [
+      {_id:"req001",subjectId:"sub001",requestType:"access",status:"completed",requestDate:"2024-02-01T10:00:00Z",completedDate:"2024-02-10T15:00:00Z",assignedTo:"dpo@company.com",description:"ขอสำเนาข้อมูลส่วนบุคคลทั้งหมด",response:"ส่งข้อมูลทางอีเมลแล้ว"},
+      {_id:"req002",subjectId:"sub002",requestType:"erasure",status:"completed",requestDate:"2024-03-22T09:00:00Z",completedDate:"2024-03-29T12:00:00Z",assignedTo:"dpo@company.com",description:"ขอลบข้อมูลส่วนบุคคลทั้งหมด",response:"ลบข้อมูลเรียบร้อย ยกเว้นข้อมูลที่กฎหมายกำหนดให้เก็บ"},
+      {_id:"req003",subjectId:"sub003",requestType:"rectification",status:"in_progress",requestDate:"2024-04-05T14:00:00Z",completedDate:null,assignedTo:"dpo@company.com",description:"ขอแก้ไขเบอร์โทรศัพท์",response:null},
+      {_id:"req004",subjectId:"sub004",requestType:"portability",status:"pending",requestDate:"2024-04-18T11:00:00Z",completedDate:null,assignedTo:null,description:"ขอรับข้อมูลในรูปแบบ machine-readable",response:null},
+      {_id:"req005",subjectId:"sub005",requestType:"restriction",status:"completed",requestDate:"2024-01-10T08:00:00Z",completedDate:"2024-01-17T10:00:00Z",assignedTo:"dpo@company.com",description:"ขอระงับการประมวลผลชั่วคราว",response:"ระงับการประมวลผลแล้วตามที่ร้องขอ"},
+    ]
+  }
+};
+
+// ===== CHEAT SHEET DATA =====
+var CHEATS = [
+  // ===== FIND =====
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'find() — ดึงข้อมูลทั้งหมด',
+   desc:'ดึงทุก document ใน collection',
+   code:[
+    '<span class="hl-cmt">// ดึงข้อมูล consent ทั้งหมด</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({})',
+    '',
+    '<span class="hl-cmt">// ใน Compass: ปล่อย Filter ว่างแล้วกด Find</span>',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'<b>Compass:</b> ช่อง Filter ว่าง = ดึงทุก document | เทียบกับ SQL: <code>SELECT * FROM consents</code>'},
+
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'find() — กรองด้วย field',
+   desc:'หา document ที่ field ตรงกับค่าที่กำหนด',
+   code:[
+    '<span class="hl-cmt">// หา consent ที่สถานะเป็น granted</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({ <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span> })',
+    '',
+    '<span class="hl-cmt">// หาตาม channel</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({ <span class="hl-key">"channel"</span>: <span class="hl-str">"web"</span> })',
+   ].join('\n'),
+   tryFilter:'{ "status": "granted" }', tryColl:'consents',
+   note:'<b>Compass:</b> พิมพ์ใน Filter box แล้วกด Find | SQL: <code>WHERE status = "granted"</code>'},
+
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'find() — กรองหลาย field (AND)',
+   desc:'กรองหลายเงื่อนไขพร้อมกัน (ทุกเงื่อนไขต้องเป็นจริง)',
+   code:[
+    '<span class="hl-cmt">// consent ที่ granted และมาจาก web</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span>,',
+    '  <span class="hl-key">"channel"</span>: <span class="hl-str">"web"</span>',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "status": "granted", "channel": "web" }', tryColl:'consents',
+   note:'ใส่หลาย key ใน {} = AND ทั้งหมด | SQL: <code>WHERE status="granted" AND channel="web"</code>'},
+
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'findOne() — ดึงแค่ 1 document',
+   desc:'คืนค่า document แรกที่ตรงเงื่อนไข',
+   code:[
+    '<span class="hl-cmt">// ดึง consent ของ subjectId sub001</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">findOne</span>({',
+    '  <span class="hl-key">"subjectId"</span>: <span class="hl-str">"sub001"</span>',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "subjectId": "sub001" }', tryColl:'consents',
+   note:'ใน Compass จะเห็นทุก document ที่ match — <code>findOne</code> ใช้ใน code จริงเพื่อดึงแค่ชิ้นเดียว'},
+
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'sort() — เรียงลำดับ',
+   desc:'เรียงผลลัพธ์ ascending (1) หรือ descending (-1)',
+   code:[
+    '<span class="hl-cmt">// เรียงตามวันที่ใหม่สุดก่อน</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({}).<span class="hl-fn">sort</span>({',
+    '  <span class="hl-key">"consentDate"</span>: <span class="hl-num">-1</span>',
+    '})',
+    '',
+    '<span class="hl-cmt">// เรียง A→Z ด้วย subjectName</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({}).<span class="hl-fn">sort</span>({ <span class="hl-key">"subjectName"</span>: <span class="hl-num">1</span> })',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'<b>1</b> = น้อยไปมาก (A→Z, เก่าไปใหม่) | <b>-1</b> = มากไปน้อย (Z→A, ใหม่ไปเก่า)'},
+
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'limit() / skip() — Pagination',
+   desc:'จำกัดจำนวน หรือข้ามข้อมูล (ใช้ทำ pagination)',
+   code:[
+    '<span class="hl-cmt">// ดึงแค่ 5 รายการแรก</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({}).<span class="hl-fn">limit</span>(<span class="hl-num">5</span>)',
+    '',
+    '<span class="hl-cmt">// หน้าที่ 2: ข้าม 5 รายการแรก แล้วดึง 5</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({}).<span class="hl-fn">skip</span>(<span class="hl-num">5</span>).<span class="hl-fn">limit</span>(<span class="hl-num">5</span>)',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'ใน Aggregation tab ใช้ <code>$limit</code> และ <code>$skip</code> แทน'},
+
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'countDocuments() — นับจำนวน',
+   desc:'นับ document ที่ตรงกับเงื่อนไข',
+   code:[
+    '<span class="hl-cmt">// นับทั้งหมด</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">countDocuments</span>({})',
+    '',
+    '<span class="hl-cmt">// นับเฉพาะที่ granted</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">countDocuments</span>({',
+    '  <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span>',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "status": "granted" }', tryColl:'consents',
+   note:'ดูจำนวนได้จากแถบ stats ด้านบนตาราง | SQL: <code>SELECT COUNT(*) FROM consents WHERE status="granted"</code>'},
+
+  {cat:'find', badge:'cb-find', badgeText:'Query', title:'projection — เลือก field',
+   desc:'กำหนดว่าจะดึง field ไหนบ้าง (1=เอา, 0=ไม่เอา)',
+   code:[
+    '<span class="hl-cmt">// ดึงแค่ชื่อ สถานะ และ purpose</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>(',
+    '  { <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span> },',
+    '  { <span class="hl-key">"subjectName"</span>: <span class="hl-num">1</span>, <span class="hl-key">"purposeName"</span>: <span class="hl-num">1</span>, <span class="hl-key">"status"</span>: <span class="hl-num">1</span> }',
+    ')',
+   ].join('\n'),
+   tryFilter:'{ "status": "granted" }', tryColl:'consents',
+   note:'<b>Compass:</b> ใส่ใน Projection box | <code>_id</code> จะถูกคืนมาเสมอ ยกเว้นระบุ <code>{ "_id": 0 }</code>'},
+
+  // ===== WRITE =====
+  {cat:'write', badge:'cb-write', badgeText:'Write', title:'insertOne() — เพิ่ม 1 document',
+   desc:'เพิ่ม document ใหม่ 1 รายการ',
+   code:[
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">insertOne</span>({',
+    '  <span class="hl-key">"subjectId"</span>: <span class="hl-str">"sub006"</span>,',
+    '  <span class="hl-key">"subjectName"</span>: <span class="hl-str">"ใหม่ เริ่มต้น"</span>,',
+    '  <span class="hl-key">"purposeId"</span>: <span class="hl-str">"pur001"</span>,',
+    '  <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span>,',
+    '  <span class="hl-key">"consentDate"</span>: <span class="hl-str">"2024-06-01T10:00:00Z"</span>,',
+    '  <span class="hl-key">"channel"</span>: <span class="hl-str">"web"</span>',
+    '})',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'<b>Compass:</b> กดปุ่ม "+ Insert" | MongoDB จะสร้าง <code>_id</code> ให้อัตโนมัติถ้าไม่ระบุ'},
+
+  {cat:'write', badge:'cb-write', badgeText:'Write', title:'insertMany() — เพิ่มหลาย document',
+   desc:'เพิ่ม document หลายรายการพร้อมกันในคำสั่งเดียว',
+   code:[
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">insertMany</span>([',
+    '  { <span class="hl-key">"subjectId"</span>: <span class="hl-str">"sub006"</span>, <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span>, <span class="hl-key">"purposeId"</span>: <span class="hl-str">"pur001"</span> },',
+    '  { <span class="hl-key">"subjectId"</span>: <span class="hl-str">"sub007"</span>, <span class="hl-key">"status"</span>: <span class="hl-str">"denied"</span>,  <span class="hl-key">"purposeId"</span>: <span class="hl-str">"pur002"</span> }',
+    '])',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'ใส่หลาย object ใน <code>[]</code> | ใช้ในการ seed ข้อมูล หรือ import จำนวนมาก'},
+
+  {cat:'write', badge:'cb-write', badgeText:'Write', title:'updateOne() — แก้ไข 1 document',
+   desc:'แก้ไข document แรกที่ตรงเงื่อนไข ด้วย $set',
+   code:[
+    '<span class="hl-cmt">// อัปเดตสถานะ consent ให้เป็น withdrawn</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">updateOne</span>(',
+    '  { <span class="hl-key">"_id"</span>: <span class="hl-str">"con001"</span> },',
+    '  { <span class="hl-op">$set</span>: {',
+    '    <span class="hl-key">"status"</span>: <span class="hl-str">"withdrawn"</span>,',
+    '    <span class="hl-key">"withdrawDate"</span>: <span class="hl-str">"2024-06-01T08:00:00Z"</span>',
+    '  }}',
+    ')',
+   ].join('\n'),
+   tryFilter:'{ "_id": "con001" }', tryColl:'consents',
+   note:'<b>$set</b> = แก้เฉพาะ field ที่ระบุ (field อื่นไม่หาย) | <b>Compass:</b> กดปุ่ม ✎ ที่แถวแล้วแก้ใน editor'},
+
+  {cat:'write', badge:'cb-write', badgeText:'Write', title:'updateMany() — แก้ไขหลาย document',
+   desc:'แก้ไขทุก document ที่ตรงเงื่อนไขพร้อมกัน',
+   code:[
+    '<span class="hl-cmt">// อัปเกรด version ของ consent ทุกตัวที่ granted</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">updateMany</span>(',
+    '  { <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span> },',
+    '  { <span class="hl-op">$set</span>: { <span class="hl-key">"version"</span>: <span class="hl-str">"2.2"</span> } }',
+    ')',
+   ].join('\n'),
+   tryFilter:'{ "status": "granted" }', tryColl:'consents',
+   note:'ระวัง! updateMany จะแก้ทุก document ที่ match — ตรวจ filter ให้ดีก่อน'},
+
+  {cat:'write', badge:'cb-write', badgeText:'Write', title:'deleteOne() / deleteMany() — ลบข้อมูล',
+   desc:'ลบ document 1 รายการ หรือหลายรายการ',
+   code:[
+    '<span class="hl-cmt">// ลบ consent รายการเดียว</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">deleteOne</span>({',
+    '  <span class="hl-key">"_id"</span>: <span class="hl-str">"con001"</span>',
+    '})',
+    '',
+    '<span class="hl-cmt">// ลบทุก consent ที่ expired</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">deleteMany</span>({',
+    '  <span class="hl-key">"status"</span>: <span class="hl-str">"expired"</span>',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "status": "expired" }', tryColl:'consents',
+   note:'<b>Compass:</b> กดปุ่ม 🗑 ที่แถว | ระวัง <code>deleteMany({})</code> จะลบทั้ง collection!'},
+
+  {cat:'write', badge:'cb-write', badgeText:'Write', title:'replaceOne() — แทนที่ทั้ง document',
+   desc:'แทนที่ document ทั้งหมด (ต่างจาก $set ที่แก้แค่บาง field)',
+   code:[
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">replaceOne</span>(',
+    '  { <span class="hl-key">"_id"</span>: <span class="hl-str">"con001"</span> },',
+    '  {',
+    '    <span class="hl-key">"subjectId"</span>: <span class="hl-str">"sub001"</span>,',
+    '    <span class="hl-key">"status"</span>: <span class="hl-str">"withdrawn"</span>,',
+    '    <span class="hl-key">"purposeId"</span>: <span class="hl-str">"pur001"</span>',
+    '  }',
+    ')',
+   ].join('\n'),
+   tryFilter:'{ "_id": "con001" }', tryColl:'consents',
+   note:'replaceOne จะแทนที่ทุก field ยกเว้น _id | ถ้าอยาก upsert ให้เพิ่ม <code>{ upsert: true }</code>'},
+
+  // ===== OPERATORS =====
+  {cat:'ops', badge:'cb-ops', badgeText:'Operator', title:'$gt / $gte / $lt / $lte — เปรียบเทียบตัวเลข',
+   desc:'มากกว่า, มากกว่าหรือเท่ากับ, น้อยกว่า, น้อยกว่าหรือเท่ากับ',
+   code:[
+    '<span class="hl-cmt">// subjects ที่มี activeConsents มากกว่า 0</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">data_subjects</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"activeConsents"</span>: { <span class="hl-op">$gt</span>: <span class="hl-num">0</span> }',
+    '})',
+    '',
+    '<span class="hl-cmt">// purposes ที่ retentionPeriod ระหว่าง 100-400 วัน</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">purposes</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"retentionPeriod"</span>: { <span class="hl-op">$gte</span>: <span class="hl-num">100</span>, <span class="hl-op">$lte</span>: <span class="hl-num">400</span> }',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "activeConsents": { "$gt": 0 } }', tryColl:'data_subjects',
+   note:'<code>$gt</code> &gt; | <code>$gte</code> ≥ | <code>$lt</code> &lt; | <code>$lte</code> ≤ | SQL: <code>WHERE activeConsents &gt; 0</code>'},
+
+  {cat:'ops', badge:'cb-ops', badgeText:'Operator', title:'$in / $nin — ค้นหาหลายค่า',
+   desc:'ตรงกับค่าใดค่าหนึ่งใน array ($in) หรือไม่ตรงเลย ($nin)',
+   code:[
+    '<span class="hl-cmt">// consent ที่ status เป็น withdrawn หรือ expired</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"status"</span>: { <span class="hl-op">$in</span>: [<span class="hl-str">"withdrawn"</span>, <span class="hl-str">"expired"</span>] }',
+    '})',
+    '',
+    '<span class="hl-cmt">// consent ที่ไม่ได้มาจาก web และ mobile_app</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"channel"</span>: { <span class="hl-op">$nin</span>: [<span class="hl-str">"web"</span>, <span class="hl-str">"mobile_app"</span>] }',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "status": { "$in": ["withdrawn", "expired"] } }', tryColl:'consents',
+   note:'SQL: <code>WHERE status IN ("withdrawn", "expired")</code>'},
+
+  {cat:'ops', badge:'cb-ops', badgeText:'Operator', title:'$ne — ไม่เท่ากับ',
+   desc:'กรองค่าที่ไม่เท่ากับที่กำหนด',
+   code:[
+    '<span class="hl-cmt">// consent ที่ status ไม่ใช่ granted</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"status"</span>: { <span class="hl-op">$ne</span>: <span class="hl-str">"granted"</span> }',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "status": { "$ne": "granted" } }', tryColl:'consents',
+   note:'SQL: <code>WHERE status != "granted"</code>'},
+
+  {cat:'ops', badge:'cb-ops', badgeText:'Operator', title:'$or — เงื่อนไข OR',
+   desc:'ตรงกับอย่างน้อยหนึ่งเงื่อนไข',
+   code:[
+    '<span class="hl-cmt">// consent ที่ granted หรือมาจาก email_link</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-op">$or</span>: [',
+    '    { <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span> },',
+    '    { <span class="hl-key">"channel"</span>: <span class="hl-str">"email_link"</span> }',
+    '  ]',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "$or": [{ "status": "granted" }, { "channel": "email_link" }] }', tryColl:'consents',
+   note:'SQL: <code>WHERE status="granted" OR channel="email_link"</code>'},
+
+  {cat:'ops', badge:'cb-ops', badgeText:'Operator', title:'$exists — ตรวจสอบว่า field มีอยู่',
+   desc:'กรองตามว่า field นั้นมีอยู่ใน document หรือไม่',
+   code:[
+    '<span class="hl-cmt">// consent ที่มี field withdrawDate (เคย withdraw)</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"withdrawDate"</span>: { <span class="hl-op">$exists</span>: <span class="hl-bool">true</span> }',
+    '})',
+    '',
+    '<span class="hl-cmt">// requests ที่ยังไม่มีคนรับผิดชอบ</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consent_requests</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"assignedTo"</span>: { <span class="hl-op">$exists</span>: <span class="hl-bool">false</span> }',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "withdrawDate": { "$exists": true } }', tryColl:'consents',
+   note:'<code>$exists: true</code> = field มีอยู่ | <code>$exists: false</code> = field ไม่มี (หรือเป็น null)'},
+
+  {cat:'ops', badge:'cb-ops', badgeText:'Operator', title:'$regex — ค้นหาด้วย pattern',
+   desc:'ค้นหาข้อความที่ตรงกับ regular expression',
+   code:[
+    '<span class="hl-cmt">// หา purpose ที่ชื่อมีคำว่า "วิเคราะห์"</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">purposes</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"name"</span>: { <span class="hl-op">$regex</span>: <span class="hl-str">"วิเคราะห์"</span>, <span class="hl-op">$options</span>: <span class="hl-str">"i"</span> }',
+    '})',
+    '',
+    '<span class="hl-cmt">// หา email ที่ลงท้าย @example.com</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">data_subjects</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"email"</span>: { <span class="hl-op">$regex</span>: <span class="hl-str">"@example\\.com$"</span> }',
+    '})',
+   ].join('\n'),
+   tryFilter:'{ "name": { "$regex": "วิเคราะห์" } }', tryColl:'purposes',
+   note:'<code>$options: "i"</code> = case-insensitive | SQL: <code>WHERE name LIKE "%วิเคราะห์%"</code>'},
+
+  {cat:'ops', badge:'cb-ops', badgeText:'Operator', title:'$set / $unset / $inc — Update Operators',
+   desc:'ตัวช่วยใน updateOne/updateMany',
+   code:[
+    '<span class="hl-cmt">// $set — แก้ค่า field</span>',
+    '{ <span class="hl-op">$set</span>: { <span class="hl-key">"status"</span>: <span class="hl-str">"withdrawn"</span> } }',
+    '',
+    '<span class="hl-cmt">// $unset — ลบ field ออก</span>',
+    '{ <span class="hl-op">$unset</span>: { <span class="hl-key">"withdrawDate"</span>: <span class="hl-str">""</span> } }',
+    '',
+    '<span class="hl-cmt">// $inc — เพิ่ม/ลดตัวเลข</span>',
+    '{ <span class="hl-op">$inc</span>: { <span class="hl-key">"activeConsents"</span>: <span class="hl-num">1</span> } }',
+    '',
+    '<span class="hl-cmt">// $push — เพิ่มค่าเข้า array</span>',
+    '{ <span class="hl-op">$push</span>: { <span class="hl-key">"dataTypes"</span>: <span class="hl-str">"biometric"</span> } }',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'ใช้ใน updateOne/updateMany เสมอ | ห้ามใช้ $set เดี่ยวๆ โดยไม่มี update operator'},
+
+  // ===== AGGREGATION =====
+  {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$match — กรองข้อมูล',
+   desc:'กรอง document เหมือน find() แต่ใช้ใน pipeline',
+   code:[
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">aggregate</span>([',
+    '  { <span class="hl-op">$match</span>: { <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span> } }',
+    '])',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'ใน Aggregation tab: เลือก <code>$match</code> แล้วพิมพ์ <code>{ "status": "granted" }</code>'},
+
+  {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$group — จัดกลุ่มและสรุปข้อมูล',
+   desc:'จัดกลุ่มตาม field และคำนวณค่าสรุป ($sum, $avg, $count)',
+   code:[
+    '<span class="hl-cmt">// นับ consent แยกตาม status</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">aggregate</span>([',
+    '  {',
+    '    <span class="hl-op">$group</span>: {',
+    '      <span class="hl-key">_id</span>: <span class="hl-str">"$status"</span>,',
+    '      <span class="hl-key">count</span>: { <span class="hl-op">$sum</span>: <span class="hl-num">1</span> }',
+    '    }',
+    '  }',
+    '])',
+    '',
+    '<span class="hl-cmt">// นับแยกตาม purposeName + channel</span>',
+    '<span class="hl-op">$group</span>: {',
+    '  <span class="hl-key">_id</span>: { <span class="hl-key">purpose</span>: <span class="hl-str">"$purposeName"</span>, <span class="hl-key">ch</span>: <span class="hl-str">"$channel"</span> },',
+    '  <span class="hl-key">total</span>: { <span class="hl-op">$sum</span>: <span class="hl-num">1</span> }',
+    '}',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'SQL: <code>GROUP BY status, COUNT(*) as count</code> | <code>_id</code> = field ที่ใช้จัดกลุ่ม'},
+
+  {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$project — กำหนด field ใน pipeline',
+   desc:'เลือกหรือสร้าง field ใหม่ภายใน pipeline',
+   code:[
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">aggregate</span>([',
+    '  { <span class="hl-op">$match</span>: { <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span> } },',
+    '  {',
+    '    <span class="hl-op">$project</span>: {',
+    '      <span class="hl-key">subjectName</span>: <span class="hl-num">1</span>,',
+    '      <span class="hl-key">purposeName</span>: <span class="hl-num">1</span>,',
+    '      <span class="hl-key">consentDate</span>: <span class="hl-num">1</span>,',
+    '      <span class="hl-key">_id</span>: <span class="hl-num">0</span>',
+    '    }',
+    '  }',
+    '])',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'<code>1</code> = แสดง | <code>0</code> = ซ่อน | สามารถสร้าง field ใหม่ได้ด้วย expressions'},
+
+  {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$sort + $limit — เรียงและจำกัด',
+   desc:'เรียงข้อมูลแล้วเอาแค่ N รายการแรก',
+   code:[
+    '<span class="hl-cmt">// Top 3 subjects ที่มี activeConsents มากสุด</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">data_subjects</span>.<span class="hl-fn">aggregate</span>([',
+    '  { <span class="hl-op">$sort</span>:  { <span class="hl-key">"activeConsents"</span>: <span class="hl-num">-1</span> } },',
+    '  { <span class="hl-op">$limit</span>: <span class="hl-num">3</span> }',
+    '])',
+   ].join('\n'),
+   tryFilter:'', tryColl:'data_subjects',
+   note:'ลำดับของ stage สำคัญมาก — $sort ก่อน $limit เสมอ เพื่อประสิทธิภาพ'},
+
+  {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$unwind — แตก array',
+   desc:'แตก field ที่เป็น array ออกเป็น document ย่อย ๆ',
+   code:[
+    '<span class="hl-cmt">// แตก dataTypes ของแต่ละ purpose</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">purposes</span>.<span class="hl-fn">aggregate</span>([',
+    '  { <span class="hl-op">$unwind</span>: <span class="hl-str">"$dataTypes"</span> },',
+    '  { <span class="hl-op">$project</span>: { <span class="hl-key">"name"</span>: <span class="hl-num">1</span>, <span class="hl-key">"dataTypes"</span>: <span class="hl-num">1</span> } }',
+    '])',
+   ].join('\n'),
+   tryFilter:'', tryColl:'purposes',
+   note:'1 purpose มี 3 dataTypes → จะได้ 3 document แทนที่จะเป็น 1'},
+
+  {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'Pipeline ตัวอย่างจริง — วิเคราะห์ Consent',
+   desc:'รวม $match + $group + $sort เพื่อสรุป consent rate ตาม purpose',
+   code:[
+    '<span class="hl-cmt">// สรุปจำนวน consent แต่ละ purposeId</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">aggregate</span>([',
+    '  { <span class="hl-op">$group</span>: {',
+    '    <span class="hl-key">_id</span>: <span class="hl-str">"$purposeName"</span>,',
+    '    <span class="hl-key">total</span>:    { <span class="hl-op">$sum</span>: <span class="hl-num">1</span> },',
+    '    <span class="hl-key">granted</span>:  { <span class="hl-op">$sum</span>: { <span class="hl-op">$cond</span>: [{ <span class="hl-op">$eq</span>: [<span class="hl-str">"$status"</span>,<span class="hl-str">"granted"</span>]},<span class="hl-num">1</span>,<span class="hl-num">0</span>] } },',
+    '    <span class="hl-key">withdrawn</span>: { <span class="hl-op">$sum</span>: { <span class="hl-op">$cond</span>: [{ <span class="hl-op">$eq</span>: [<span class="hl-str">"$status"</span>,<span class="hl-str">"withdrawn"</span>]},<span class="hl-num">1</span>,<span class="hl-num">0</span>] } }',
+    '  }},',
+    '  { <span class="hl-op">$sort</span>: { <span class="hl-key">"total"</span>: <span class="hl-num">-1</span> } }',
+    '])',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'<b>Aggregation tab:</b> Stage 1 = $group ใส่ body ด้านบน | Stage 2 = $sort ใส่ <code>{ "total": -1 }</code>'},
+
+  // ===== INDEX =====
+  {cat:'index', badge:'cb-index', badgeText:'Index', title:'createIndex() — สร้าง Index',
+   desc:'เพิ่ม index เพื่อให้ query เร็วขึ้น',
+   code:[
+    '<span class="hl-cmt">// Index เดี่ยว — ค้นหาด้วย subjectId</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">createIndex</span>({ <span class="hl-key">"subjectId"</span>: <span class="hl-num">1</span> })',
+    '',
+    '<span class="hl-cmt">// Compound index — status + consentDate</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">createIndex</span>({',
+    '  <span class="hl-key">"status"</span>: <span class="hl-num">1</span>,',
+    '  <span class="hl-key">"consentDate"</span>: <span class="hl-num">-1</span>',
+    '})',
+    '',
+    '<span class="hl-cmt">// Unique index — email ห้ามซ้ำ</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">data_subjects</span>.<span class="hl-fn">createIndex</span>(',
+    '  { <span class="hl-key">"email"</span>: <span class="hl-num">1</span> },',
+    '  { <span class="hl-key">"unique"</span>: <span class="hl-bool">true</span> }',
+    ')',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'<b>Compass:</b> ไปที่ Indexes tab กด "+ Create Index" | Index ช่วยให้ query เร็วขึ้นมาก แต่ใช้พื้นที่เพิ่ม'},
+
+  {cat:'index', badge:'cb-index', badgeText:'Index', title:'getIndexes() — ดู Index ที่มีอยู่',
+   desc:'แสดง index ทั้งหมดของ collection',
+   code:[
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">getIndexes</span>()',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents',
+   note:'<b>Compass:</b> ดูได้ที่ Indexes tab | MongoDB สร้าง index บน <code>_id</code> ให้อัตโนมัติเสมอ'},
+
+  {cat:'index', badge:'cb-index', badgeText:'Index', title:'explain() — วิเคราะห์ประสิทธิภาพ Query',
+   desc:'ดูว่า MongoDB ใช้ index ไหม และ query ใช้เวลาเท่าไร',
+   code:[
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">find</span>({',
+    '  <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span>',
+    '}).<span class="hl-fn">explain</span>(<span class="hl-str">"executionStats"</span>)',
+    '',
+    '<span class="hl-cmt">// ดูค่า: winningPlan, totalDocsExamined,</span>',
+    '<span class="hl-cmt">// executionTimeMillis</span>',
+   ].join('\n'),
+   tryFilter:'{ "status": "granted" }', tryColl:'consents',
+   note:'ถ้า <code>winningPlan.stage</code> เป็น <b>COLLSCAN</b> = ยังไม่มี index | <b>IXSCAN</b> = ใช้ index แล้ว'},
+
+  // ===== REPLICA SET =====
+  {cat:'admin', badge:'cb-admin', badgeText:'Replica Set', title:'rs.initiate() — เริ่มต้น Replica Set',
+   desc:'สร้าง Replica Set ใหม่บน node แรก (Primary)',
+   blocks:[
+    {header:'สร้าง Replica Set 3 nodes',
+     why:'<b>_id: "rs0"</b> = ชื่อ Replica Set ต้องตรงกับ config ทุก node | ต้องมีอย่างน้อย 3 nodes เพื่อให้ election ทำงานได้ (majority vote)',
+     code:'rs.initiate({\n  _id: "rs0",\n  members: [\n    { _id: 0, host: "mongo1:27017" },\n    { _id: 1, host: "mongo2:27017" },\n    { _id: 2, host: "mongo3:27017" }\n  ]\n})'},
+    {header:'แนวคิด Replica Set',
+     why:'<b>Primary</b> รับ write ทั้งหมด | <b>Secondary</b> รับ replication จาก Primary | ถ้า Primary ล้ม Secondary จะ vote เลือก Primary ใหม่ภายใน ~10 วินาที',
+     code:'Primary  (mongo1) ← รับ write + read\n  └─ replicates to →\nSecondary (mongo2) ← standby\nSecondary (mongo3) ← standby'},
+   ],
+   note:'Replica Set ต้องการอย่างน้อย 3 nodes (1 Primary + 2 Secondary) | Primary รับ write, Secondary รับ read'},
+
+  {cat:'admin', badge:'cb-admin', badgeText:'Replica Set', title:'rs.status() — ดูสถานะ Replica Set',
+   desc:'แสดงสถานะของทุก member ใน Replica Set แบบ real-time',
+   blocks:[
+    {header:'ดูสถานะทั้งหมด',
+     why:'ใช้ตรวจสอบว่าทุก node ทำงานปกติ | <b>health: 1</b> = ปกติ, <b>health: 0</b> = มีปัญหา',
+     code:'rs.status()'},
+    {header:'ค่าสำคัญที่ต้องดู',
+     why:'<b>stateStr</b> บอกว่า node นี้เป็น PRIMARY / SECONDARY / RECOVERING | <b>optimeDate</b> บอกว่า replication ล่าช้าแค่ไหน (lag)',
+     code:'// set         — ชื่อ Replica Set เช่น "rs0"\n// members[]   — รายชื่อทุก node\n//   .name      — hostname:port\n//   .stateStr  — PRIMARY / SECONDARY / ARBITER\n//   .health    — 1=ปกติ, 0=มีปัญหา\n//   .optimeDate— เวลา replication ล่าสุด'},
+    {header:'ตรวจว่าเป็น Primary หรือไม่',
+     why:'ใช้ในกรณีที่ต้องการรู้ว่า node ที่ login อยู่เป็น Primary ก่อน write ข้อมูล',
+     code:'rs.isMaster()\n// ดูค่า ismaster: true/false'},
+   ],
+   note:'ใน Compass: ดูสถานะ Replica Set ได้ที่แถบซ้ายบนหลังเชื่อมต่อ | <code>rs.conf()</code> ดู configuration ปัจจุบัน'},
+
+  {cat:'admin', badge:'cb-admin', badgeText:'Replica Set', title:'rs.add() / rs.remove() — จัดการ Member',
+   desc:'เพิ่มหรือลบ node ออกจาก Replica Set',
+   blocks:[
+    {header:'เพิ่ม Secondary node ใหม่',
+     why:'ใช้เมื่อต้องการ scale read capacity หรือเพิ่ม redundancy | node ใหม่จะ sync ข้อมูลจาก Primary อัตโนมัติ (initial sync)',
+     code:'rs.add("mongo4:27017")'},
+    {header:'เพิ่ม node แบบไม่ให้เป็น Primary',
+     why:'<b>priority: 0</b> = node นี้จะไม่มีสิทธิ์ถูกเลือกเป็น Primary | เหมาะสำหรับ node ที่อยู่ต่าง datacenter หรือใช้เป็น backup เท่านั้น',
+     code:'rs.add({ host: "mongo4:27017", priority: 0, hidden: true })'},
+    {header:'ลบ node ออก',
+     why:'ใช้เมื่อ node นั้นเสียหายถาวร หรือ decommission | ต้อง run บน Primary เท่านั้น',
+     code:'rs.remove("mongo4:27017")'},
+    {header:'บังคับ Failover (เลือก Primary ใหม่)',
+     why:'<b>stepDown</b> บังคับให้ Primary ลาออกจากตำแหน่ง — Secondary จะ vote เลือกคนใหม่ | ใช้เมื่อต้องการ maintenance Primary โดยไม่หยุดระบบ',
+     code:'rs.stepDown()'},
+   ],
+   note:'<code>priority: 0</code> = ไม่มีสิทธิ์เป็น Primary | <code>hidden: true</code> = ซ่อนจาก client driver'},
+
+  {cat:'admin', badge:'cb-admin', badgeText:'Replica Set', title:'Read Preference — อ่านจาก Secondary',
+   desc:'กำหนดว่า client จะอ่านข้อมูลจาก node ไหน เพื่อกระจาย load',
+   blocks:[
+    {header:'Read Preference Options',
+     why:'ค่า default คือ <b>primary</b> — ทุก read ไปที่ Primary | เปลี่ยนเป็น <b>secondaryPreferred</b> เพื่อลด load ที่ Primary',
+     code:'// primary            อ่านจาก Primary เท่านั้น (default, ข้อมูลใหม่สุด)\n// primaryPreferred   Primary ก่อน ถ้า Primary ล้มใช้ Secondary\n// secondary          อ่านจาก Secondary เท่านั้น\n// secondaryPreferred Secondary ก่อน ถ้าไม่มีใช้ Primary\n// nearest            node ที่ latency ต่ำสุด (ใช้กับ geo-distributed)'},
+    {header:'กำหนดใน Connection String',
+     why:'ตั้งค่าครั้งเดียว ทุก query ใช้ตาม preference นี้ | เหมาะสำหรับ application ที่อ่านเยอะกว่าเขียน',
+     code:'"mongodb://mongo1,mongo2,mongo3/consentdb?replicaSet=rs0&readPreference=secondaryPreferred"'},
+    {header:'ข้อควรระวัง',
+     why:'Secondary อาจได้ข้อมูลล่าช้ากว่า Primary เล็กน้อย (replication lag) | ไม่ควรอ่านจาก Secondary สำหรับข้อมูลที่ต้องการ consistency สูง เช่น ตรวจสอบ consent ก่อน process',
+     code:'// Consent check ก่อน process → ใช้ primary\n// Report / analytics → ใช้ secondaryPreferred'},
+   ],
+   note:'การอ่านจาก Secondary อาจได้ข้อมูลที่ยังไม่ sync (eventual consistency) | ใช้ secondary สำหรับ analytics เท่านั้น'},
+
+  {cat:'admin', badge:'cb-admin', badgeText:'Sharding', title:'sh.enableSharding() — เปิด Sharding',
+   desc:'เปิดใช้ Sharding บน database และกำหนด Shard Key เพื่อแบ่งข้อมูล',
+   blocks:[
+    {header:'เปิด Sharding บน Database',
+     why:'ต้องทำก่อนเสมอ | บอก MongoDB ว่า database นี้จะใช้ sharding',
+     code:'sh.enableSharding("consentdb")'},
+    {header:'Hashed Sharding — กระจายสม่ำเสมอ',
+     why:'<b>hashed</b> = hash ค่า subjectId ก่อนแบ่ง — ข้อมูลกระจายสม่ำเสมอทุก shard | เหมาะเมื่อ query ด้วย exact match และอยากให้ข้อมูลกระจายเท่าๆ กัน',
+     code:'sh.shardCollection("consentdb.consents", { "subjectId": "hashed" })'},
+    {header:'Ranged Sharding — แบ่งตามช่วงค่า',
+     why:'<b>Ranged</b> = แบ่งตามค่าจริงของ field — ดีสำหรับ range query เช่น ดึง consent ในช่วงวันที่ | แต่ถ้าข้อมูลใหม่เพิ่มต่อเนื่อง อาจทำให้ shard สุดท้ายใหญ่กว่าคนอื่น (hotspot)',
+     code:'sh.shardCollection("consentdb.consent_logs", { "consentDate": 1 })'},
+    {header:'หลักการเลือก Shard Key',
+     why:'Shard Key สำคัญมาก เปลี่ยนไม่ได้หลัง shard แล้ว | ควรมี cardinality สูง (ค่าหลากหลาย), กระจายสม่ำเสมอ, และตรงกับ query pattern',
+     code:'// ดี:   subjectId (unique ต่อ user)\n// ดี:   { subjectId: 1, purposeId: 1 } (compound)\n// ไม่ดี: status (มีแค่ 4 ค่า → hotspot)\n// ไม่ดี: consentDate เพียงอย่างเดียว (monotonic → hotspot)'},
+   ],
+   note:'<b>Shard Key</b> เปลี่ยนไม่ได้หลัง sharding | ต้องมี Config Server และ mongos router ก่อนเริ่ม sharding'},
+
+  {cat:'admin', badge:'cb-admin', badgeText:'Sharding', title:'sh.status() — ดูสถานะ Sharding',
+   desc:'แสดงภาพรวม shards, databases และการกระจาย chunks',
+   blocks:[
+    {header:'ดูภาพรวม Sharding',
+     why:'แสดง shard ทั้งหมด, collections ที่ shard แล้ว และจำนวน chunks แต่ละ shard',
+     code:'sh.status()'},
+    {header:'ดู Shard ที่มีอยู่ทั้งหมด',
+     why:'listShards ดึงรายชื่อทุก shard server | ใช้ตรวจว่า shard ใหม่ที่เพิ่มเข้ามาถูก register แล้ว',
+     code:'db.adminCommand({ listShards: 1 })'},
+    {header:'ดูการกระจาย Chunks ของ Collection',
+     why:'<b>Chunk</b> = หน่วยข้อมูลที่ MongoDB ใช้แบ่ง (default 128MB) | ถ้า chunk ไม่กระจาย Balancer จะย้ายให้อัตโนมัติ',
+     code:'db.consents.getShardDistribution()\n// ดู: Shard Name, Data Size, Chunk Count'},
+   ],
+   note:'Balancer ทำงาน background ย้าย chunk ให้สมดุล | <code>sh.isBalancerRunning()</code> ตรวจสอบว่า Balancer กำลังทำงาน'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Backup', title:'mongodump / mongorestore — Backup & Restore',
+   desc:'สำรองและกู้คืนข้อมูลด้วย command line',
+   blocks:[
+    {header:'1. Backup ทั้ง server',
+     why:'เซฟทุก database ไว้ที่ folder <code>/backup/2024-06-01</code> — ใช้ก่อน upgrade หรือ maintenance',
+     code:'mongodump --uri "mongodb://localhost:27017" \\\n          --out /backup/2024-06-01'},
+    {header:'2. Backup เฉพาะ database',
+     why:'เซฟเฉพาะ <code>consentdb</code> เดียว — เร็วกว่าและไฟล์เล็กกว่า',
+     code:'mongodump --db consentdb \\\n          --out /backup/consentdb'},
+    {header:'3. Backup เฉพาะ collection',
+     why:'เซฟเฉพาะ collection <code>consents</code> — ใช้เมื่ออยากเซฟเฉพาะตารางที่สำคัญ',
+     code:'mongodump --db consentdb \\\n          --collection consents \\\n          --out /backup/'},
+    {header:'4. Restore (กู้คืนข้อมูล)',
+     why:'นำข้อมูลจาก backup กลับมา — ใช้หลังจาก server crash หรือข้อมูลเสียหาย',
+     code:'mongorestore --uri "mongodb://localhost:27017" \\\n             /backup/2024-06-01'},
+   ],
+   note:'ควร backup ก่อน maintenance ทุกครั้ง | ใน Production ใช้ <b>MongoDB Atlas Backup</b> หรือ <b>Ops Manager</b>'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Backup', title:'mongoexport / mongoimport — Export เป็น JSON/CSV',
+   desc:'Export ข้อมูลเป็นไฟล์ JSON หรือ CSV สำหรับแลกเปลี่ยนกับ system อื่น',
+   blocks:[
+    {header:'Export เป็น JSON (พร้อม filter)',
+     why:'<b>--query</b> กรองเฉพาะ consent ที่ status=granted ก่อน export | ได้ไฟล์ <code>.json</code> ที่อ่านได้ด้วย text editor',
+     code:'mongoexport --db consentdb \
+            --collection consents \
+            --query \'{"status":"granted"}\' \
+            --out consents_granted.json'},
+    {header:'Export เป็น CSV (เลือก field)',
+     why:'<b>--type csv</b> สร้างไฟล์ที่เปิดด้วย Excel ได้เลย | <b>--fields</b> กำหนดว่าจะเอา column ไหนบ้าง — ใช้ทำ report ส่ง DPO',
+     code:'mongoexport --db consentdb \\\n            --collection consents \\\n            --type csv \\\n            --fields subjectId,status,consentDate \\\n            --out consents.csv'},
+    {header:'Import กลับเข้า MongoDB',
+     why:'นำไฟล์ JSON กลับเข้า collection | ใช้ migrate ข้อมูลไป environment ใหม่ หรือ restore บางส่วน',
+     code:'mongoimport --db consentdb \\\n            --collection consents \\\n            --file consents_granted.json'},
+   ],
+   note:'<b>mongodump</b> = binary backup สมบูรณ์ เหมาะกับ restore | <b>mongoexport</b> = text ที่อ่านได้ เหมาะกับ integrate กับ system อื่น'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Security', title:'createUser() — สร้าง User และกำหนดสิทธิ์',
+   desc:'สร้าง database user พร้อม role ที่เหมาะสม',
+   code:[
+    '<span class="hl-cmt">// สร้าง Admin user</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-fn">createUser</span>({',
+    '  <span class="hl-key">user</span>: <span class="hl-str">"dpo_admin"</span>,',
+    '  <span class="hl-key">pwd</span>:  <span class="hl-str">"StrongPass123!"</span>,',
+    '  <span class="hl-key">roles</span>: [{ <span class="hl-key">role</span>: <span class="hl-str">"dbAdmin"</span>, <span class="hl-key">db</span>: <span class="hl-str">"consentdb"</span> }]',
+    '})',
+    '',
+    '<span class="hl-cmt">// สร้าง Read-Only user สำหรับ report</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-fn">createUser</span>({',
+    '  <span class="hl-key">user</span>: <span class="hl-str">"report_user"</span>,',
+    '  <span class="hl-key">pwd</span>:  <span class="hl-str">"ReadOnly456!"</span>,',
+    '  <span class="hl-key">roles</span>: [{ <span class="hl-key">role</span>: <span class="hl-str">"read"</span>, <span class="hl-key">db</span>: <span class="hl-str">"consentdb"</span> }]',
+    '})',
+    '',
+    '<span class="hl-cmt">// Built-in Roles ที่ใช้บ่อย:</span>',
+    '<span class="hl-cmt">// read         — อ่านได้อย่างเดียว</span>',
+    '<span class="hl-cmt">// readWrite    — อ่านและเขียน</span>',
+    '<span class="hl-cmt">// dbAdmin      — จัดการ schema, index, stats</span>',
+    '<span class="hl-cmt">// userAdmin    — จัดการ user</span>',
+    '<span class="hl-cmt">// clusterAdmin — จัดการ cluster ทั้งหมด</span>',
+   ].join('\n'),
+   note:'ควรใช้ <b>Principle of Least Privilege</b> — ให้สิทธิ์แค่ที่จำเป็น | <code>db.getUsers()</code> ดู user ที่มีอยู่'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Security', title:'Authentication & TLS — เข้ารหัสการเชื่อมต่อ',
+   desc:'เปิดใช้ authentication และ TLS/SSL เพื่อความปลอดภัย',
+   blocks:[
+    {header:'เปิด Authentication ใน mongod.conf',
+     why:'ถ้าไม่เปิด authorization ใครก็เชื่อมต่อได้โดยไม่ต้องใส่ password | ต้องเปิดก่อน production เสมอ',
+     code:'security:\n  authorization: enabled'},
+    {header:'เชื่อมต่อด้วย Username/Password',
+     why:'ระบุ user:password ใน URI แทนการ login แยก | <code>authSource=admin</code> บอกว่า user นี้อยู่ใน db ไหน',
+     code:'mongosh "mongodb://dpo_admin:StrongPass123!@localhost:27017/consentdb"'},
+    {header:'เปิด TLS ใน mongod.conf',
+     why:'TLS เข้ารหัส network traffic ระหว่าง client กับ server | <b>requireTLS</b> บังคับทุก connection ต้องเข้ารหัส — ไม่มีข้อยกเว้น',
+     code:'net:\n  tls:\n    mode: requireTLS\n    certificateKeyFile: /etc/ssl/mongodb.pem\n    CAFile: /etc/ssl/ca.pem'},
+    {header:'เชื่อมต่อด้วย TLS',
+     why:'ต้องแนบ client certificate ด้วย | PDPA กำหนดให้ต้องมีการเข้ารหัสข้อมูลระหว่างส่ง (in-transit encryption)',
+     code:'mongosh --tls \\\n        --tlsCertificateKeyFile /etc/ssl/client.pem \\\n        --host mongo.example.com'},
+   ],
+   note:'PDPA มาตรา 37 กำหนดให้ต้องมีมาตรการรักษาความปลอดภัยที่เหมาะสม | ควรเข้ารหัสทั้ง in-transit (TLS) และ at-rest (Encrypted Storage Engine)'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Security', title:'Auditing — บันทึก Audit Log',
+   desc:'บันทึกทุกการกระทำในระบบเพื่อ compliance และการตรวจสอบ',
+   blocks:[
+    {header:'เปิด Audit Log ใน mongod.conf (Enterprise)',
+     why:'<b>destination: file</b> บันทึกลงไฟล์ | <b>filter</b> เลือกว่าจะ log action ไหน — ระบุเฉพาะที่จำเป็นเพื่อไม่ให้ไฟล์ใหญ่เกินไป',
+     code:'auditLog:\n  destination: file\n  format: JSON\n  path: /var/log/mongodb/audit.json\n  filter: \'{"atype":{"$in":["authenticate","find","insert","update","delete"]}}\''},
+    {header:'เปิด Auditing ใน MongoDB Atlas',
+     why:'Atlas มี UI สำหรับตั้งค่า audit ได้ง่ายกว่า — ไม่ต้องแก้ config file',
+     code:'Project Settings → Database Auditing → Enable\nเลือก action ที่ต้องการ log → Save'},
+    {header:'สิ่งที่ควร log สำหรับระบบ Consent (PDPA)',
+     why:'PDPA มาตรา 37 กำหนดให้บันทึกการเข้าถึงข้อมูล | audit log ใช้พิสูจน์ว่ามีการควบคุมการเข้าถึงข้อมูลส่วนบุคคลจริง',
+     code:'// ใครอ่านข้อมูล consent ของใคร (find)\n// ใครแก้ไข consent (update)\n// ใครลบ consent (delete)\n// ใครสร้าง/แก้ไข user ในระบบ (createUser, dropUser)\n// การ authenticate ที่ล้มเหลว (authenticate failed)'},
+   ],
+   note:'Audit log ควรเก็บไว้อย่างน้อย 3 ปี | ควรเก็บ log ใน storage แยกจาก MongoDB เพื่อป้องกันการแก้ไข'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Monitoring', title:'db.serverStatus() — ดูสถานะ Server',
+   desc:'ดูสถิติ real-time ของ MongoDB server',
+   blocks:[
+    {header:'ดูสถานะรวม',
+     why:'คืน JSON ขนาดใหญ่ครอบคลุมทุกด้าน | ใช้เป็น snapshot ณ ขณะนั้น',
+     code:'db.serverStatus()'},
+    {header:'ดู Connections',
+     why:'<b>current</b> = connection ที่ใช้อยู่ | <b>available</b> = รับได้อีก | ถ้า available ใกล้ 0 = connection leak หรือต้องเพิ่ม maxPoolSize',
+     code:'db.serverStatus().connections\n// current:   จำนวน connection ที่เปิดอยู่\n// available: จำนวนที่รับได้อีก\n// totalCreated: รวมตั้งแต่ start'},
+    {header:'ดู Memory Usage',
+     why:'<b>resident</b> = RAM จริงที่ใช้อยู่ | <b>virtual</b> = รวม swap | ถ้า resident สูงมากอาจต้องเพิ่ม RAM หรือ index ไม่เหมาะสม',
+     code:'db.serverStatus().mem\n// resident: MB ที่ใช้จริง (RAM)\n// virtual:  MB รวม virtual memory'},
+    {header:'ดู Operation Counters',
+     why:'นับจำนวน operation แต่ละประเภทตั้งแต่ server start | เปรียบเทียบช่วงเวลาต่างๆ เพื่อดู read/write ratio',
+     code:'db.serverStatus().opcounters\n// insert / query / update / delete / getmore / command'},
+   ],
+   note:'ใช้ monitor ปัญหา performance | ถ้า <code>connections.current</code> สูงมาก อาจต้องเพิ่ม connection pool หรือ scale'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Monitoring', title:'db.currentOp() — ดู Operation ที่กำลังทำงาน',
+   desc:'แสดง query / operation ที่กำลัง execute อยู่ตอนนี้',
+   blocks:[
+    {header:'ดูทุก Operation ที่กำลังทำงาน',
+     why:'แสดง snapshot ของทุก operation ณ ขณะนั้น | ใช้วินิจฉัยว่ามี query อะไรค้างอยู่',
+     code:'db.currentOp()'},
+    {header:'กรองเฉพาะ Operation ที่ช้า',
+     why:'<b>secs_running > 5</b> = operation ที่ทำงานนานกว่า 5 วินาที | มักเป็น query ที่ขาด index หรือ lock รอ transaction อื่น',
+     code:'db.currentOp({ "secs_running": { $gt: 5 } })\n// ดูค่า:\n//   opid      — Operation ID (ใช้กับ killOp)\n//   ns        — namespace (db.collection)\n//   op        — query/update/insert/delete\n//   planSummary — COLLSCAN = ไม่มี index!'},
+    {header:'หยุด Operation ที่ค้าง',
+     why:'ใช้ opid จาก currentOp() | ใช้เมื่อ query ทำให้ระบบช้าและต้องหยุดทันที — ระวัง: อาจทำให้ transaction rollback',
+     code:'db.killOp(12345)  // แทน 12345 ด้วย opid จริง'},
+   ],
+   note:'ใช้แก้ปัญหา query ที่ทำให้ server ช้า | ใน Compass: ดูได้ที่ Performance tab → Real-Time Performance Panel'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Monitoring', title:'Profiler — บันทึก Slow Query',
+   desc:'เปิด profiler เพื่อเก็บ log query ที่ช้า และวิเคราะห์ปัญหา',
+   blocks:[
+    {header:'ดูสถานะ Profiler ปัจจุบัน',
+     why:'ตรวจว่า profiler เปิดอยู่หรือไม่ และ threshold ปัจจุบันคือเท่าไร',
+     code:'db.getProfilingStatus()\n// { was: 0, slowms: 100 }\n// was: 0=ปิด, 1=slow only, 2=ทุก query'},
+    {header:'เปิด Profiler (Level 1 — เฉพาะ Slow Query)',
+     why:'Level 1 บันทึกเฉพาะ query ที่ช้ากว่า <b>slowms</b> ms | ไม่กระทบ performance มาก — ใช้ได้ใน production',
+     code:'db.setProfilingLevel(1, { slowms: 100 })\n// บันทึก query ที่ใช้เวลา > 100ms'},
+    {header:'ดู Slow Queries ที่บันทึกไว้',
+     why:'เรียง millis มากสุดก่อน = เห็น query ที่ช้าที่สุด | <b>planSummary: COLLSCAN</b> = ยังไม่มี index — ควรสร้าง index',
+     code:'db.system.profile.find({})\n  .sort({ millis: -1 })\n  .limit(10)\n// ดู: ns, op, millis, planSummary, keysExamined'},
+    {header:'ปิด Profiler',
+     why:'Level 2 บันทึกทุก query — กระทบ performance มาก ใช้แค่ตอน debug แล้วปิดทันที',
+     code:'db.setProfilingLevel(0)  // ปิด profiler'},
+   ],
+   note:'Level 2 กระทบ performance สูง — ใช้แค่ตอน debug | Compass: ดู slow queries ที่ Performance → Profiler'},
+
+  {cat:'security', badge:'cb-security', badgeText:'Monitoring', title:'db.stats() — สถิติ Database / Collection',
+   desc:'ดูขนาดและสถิติของ database หรือ collection',
+   blocks:[
+    {header:'สถิติ Database',
+     why:'ดูภาพรวม: กี่ collection, ขนาด data รวม, ขนาด index รวม | ใช้วางแผน storage',
+     code:'db.stats()\n// collections: จำนวน collection\n// dataSize:    ขนาดข้อมูลรวม (bytes)\n// storageSize: พื้นที่จริงบน disk\n// indexSize:   ขนาด index ทั้งหมด'},
+    {header:'สถิติ Collection',
+     why:'ดูรายละเอียดของ collection เดียว | เปรียบเทียบ storageSize กับ indexSize — ถ้า index ใหญ่กว่าข้อมูลอาจมี index เกินความจำเป็น',
+     code:'db.consents.stats()\n// count:       จำนวน document\n// avgObjSize:  ขนาดเฉลี่ยต่อ document\n// totalIndexSize: ขนาด index ทั้งหมด'},
+    {header:'ดูขนาดเป็น MB',
+     why:'หารด้วย 1024*1024 เพื่อให้อ่านง่าย',
+     code:'db.stats(1024 * 1024)  // แสดงเป็น MB'},
+    {header:'ดูทุก Collection พร้อมขนาด',
+     why:'loop ผ่านทุก collection แล้วแสดงขนาด — ใช้หา collection ที่ใหญ่ที่สุดเพื่อ optimize',
+     code:'db.getCollectionNames().forEach(function(c) {\n  var s = db.getCollection(c).stats();\n  print(c, "→ docs:", s.count, "| size:", Math.round(s.storageSize/1024), "KB");\n})'},
+   ],
+   note:'ดูได้ใน <b>Compass → Database → Collections</b> มี storage size และ index size แสดงไว้แล้ว'},
+
+  ];
+
+var currentFilter = 'all';
+
+function renderCheatSheet(filter) {
+  var list = document.getElementById('cheat-list');
+  var items = filter === 'all' ? CHEATS : CHEATS.filter(function(c){ return c.cat === filter; });
+  var html = '';
+  items.forEach(function(c, i) {
+    var id = 'cc' + i + filter;
+    var hasTry = c.tryFilter !== undefined && c.tryColl;
+    html += '<div class="cheat-card" data-cat="' + c.cat + '">';
+    html += '<div class="cheat-card-header" onclick="toggleCard(\'' + id + '\')">';
+    html += '<div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><span class="cheat-badge ' + c.badge + '">' + c.badgeText + '</span><span class="cheat-title">' + c.title + '</span></div><div class="cheat-desc">' + c.desc + '</div></div>';
+    html += '<span class="cheat-arrow" id="arr' + id + '">&#9654;</span>';
+    html += '</div>';
+    html += '<div class="cheat-body" id="' + id + '">';
+    if (c.blocks) {
+      // Sectioned block format: [{header, why, code}]
+      var allCode = c.blocks.map(function(b){ return '# ' + b.header + '\n' + b.code; }).join('\n\n');
+      html += '<button class="copy-btn" style="position:relative;margin:8px 0 4px;display:inline-flex" onclick="copyRaw(this,\'' + encodeURIComponent(allCode) + '\')" >Copy All</button>';
+      c.blocks.forEach(function(b) {
+        html += '<div class="cheat-block">';
+        html += '<div class="cheat-block-header">' + b.header + '</div>';
+        if (b.why) html += '<div class="cheat-block-why">' + b.why + '</div>';
+        html += '<div class="cheat-block-code">' + b.code + '</div>';
+        html += '</div>';
+      });
+    } else {
+      html += '<div class="cheat-code"><button class="copy-btn" onclick="copyCode(this)">Copy</button>' + c.code + '</div>';
+    }
+
+    if (hasTry) {
+      var previewText = c.tryFilter ? c.tryFilter : '{}';
+      html += '<div style="margin-top:10px;margin-bottom:4px">';
+      html += '<div style="font-size:10px;color:#555;font-family:sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">&#128269; Filter ที่จะใส่ในช่อง:</div>';
+      html += '<div style="display:flex;align-items:center;gap:8px;background:#060610;border:1px solid #2a3a6a;border-radius:6px;padding:7px 10px">';
+      html += '<span style="flex:1;font-family:\'Courier New\',monospace;font-size:12px;color:#4da6ff;word-break:break-all">' + previewText + '</span>';
+      html += '<button class="try-btn" style="flex-shrink:0;margin-top:0" onclick="tryCmd(\'' + c.tryColl + '\',\'' + encodeURIComponent(c.tryFilter) + '\')">&#9654; ลองใน Simulator</button>';
+      html += '</div>';
+      html += '<div style="font-size:10px;color:#444;font-family:sans-serif;margin-top:4px">collection: <span style="color:#3a6a6a">' + c.tryColl + '</span></div>';
+      html += '</div>';
+    }
+
+    if (c.note) {
+      if (hasTry) {
+        html += '<div class="cheat-note">' + c.note + '</div>';
+      } else {
+        var lines = c.note.split('|').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 0; });
+        html += '<div class="cheat-explain">';
+        lines.forEach(function(line) {
+          html += '<div class="cheat-explain-row">&#9656; ' + line + '</div>';
+        });
+        html += '</div>';
+      }
+    }
+
+    html += '</div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function filterCheat(cat, btn) {
+  currentFilter = cat;
+  document.querySelectorAll('.cheat-cat-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderCheatSheet(cat);
+}
+
+function toggleCard(id) {
+  var body = document.getElementById(id);
+  var arr = document.getElementById('arr' + id);
+  if (body.classList.contains('open')) {
+    body.classList.remove('open'); body.style.display = 'none';
+    arr.classList.remove('open');
+  } else {
+    body.classList.add('open'); body.style.display = 'block';
+    arr.classList.add('open');
+  }
+}
+
+function copyCode(btn) {
+  var code = btn.parentElement.textContent.replace('Copy','').trim();
+  navigator.clipboard.writeText(code).then(function(){
+    btn.textContent = 'Copied!'; btn.style.color = '#28c840';
+    setTimeout(function(){ btn.textContent = 'Copy'; btn.style.color = ''; }, 1500);
+  });
+}
+function copyRaw(btn, enc) {
+  var text = decodeURIComponent(enc);
+  navigator.clipboard.writeText(text).then(function(){
+    btn.textContent = 'Copied!'; btn.style.color = '#28c840';
+    setTimeout(function(){ btn.textContent = 'Copy All'; btn.style.color = ''; }, 1500);
+  });
+}
+
+function tryCmd(coll, filterEnc) {
+  var filter = decodeURIComponent(filterEnc);
+  // เปิด db ถ้ายังไม่เปิด
+  currentDb = 'consentdb';
+  currentColl = coll;
+  renderSidebar();
+  // แสดง main view
+  document.getElementById('welcome-screen').style.display = 'none';
+  document.getElementById('main-view').style.display = 'flex';
+  document.getElementById('coll-info').textContent = 'consentdb.' + coll;
+  // สลับไป Documents tab
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.tab')[0].classList.add('active');
+  switchTabActive('documents');
+  // ใส่ filter แล้ว run
+  document.getElementById('filter-input').value = filter;
+  document.getElementById('proj-input').value = '';
+  applyFilter();
+  // flash กล่อง filter ให้เห็นชัด
+  var inp = document.getElementById('filter-input');
+  inp.style.borderColor = '#4da6ff';
+  inp.style.boxShadow = '0 0 0 2px rgba(77,166,255,0.25)';
+  setTimeout(function(){ inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1200);
+  showNotif('โหลด ' + coll + (filter ? ' + filter แล้ว!' : ' แล้ว!'), 'success');
+}
+
+// ===== REST OF APP =====
+var currentDb=null, currentColl=null, filteredDocs=[], aggrStages=[];
+function genId(){ return Math.random().toString(36).substr(2,8)+Date.now().toString(36); }
+
+function renderSidebar(){
+  var el=document.getElementById('db-list'), html='';
+  Object.keys(db).forEach(function(dbName){
+    var isOpen=currentDb===dbName, colls=db[dbName];
+    var totalDocs=Object.values(colls).reduce(function(a,c){return a+c.length;},0);
+    html+='<div><div class="db-item '+(isOpen?'active':'')+'" onclick="toggleDb(\''+dbName+'\')" style="user-select:none"><span style="color:#3a6a6a;font-size:12px">'+(isOpen?'&#9660;':'&#9654;')+'</span>';
+    html+='<svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><ellipse cx="7" cy="3" rx="5" ry="2" fill="#1e3a5a" stroke="#4da6ff" stroke-width="0.8"/><path d="M2 3 Q2 7 7 7 Q12 7 12 3" stroke="#4da6ff" stroke-width="0.8" fill="#12121f"/><ellipse cx="7" cy="7" rx="5" ry="2" fill="#1e3a5a" stroke="#4da6ff" stroke-width="0.8"/><path d="M2 7 Q2 11 7 11 Q12 11 12 7" stroke="#4da6ff" stroke-width="0.8" fill="#12121f"/><ellipse cx="7" cy="11" rx="5" ry="2" fill="#1e3a5a" stroke="#4da6ff" stroke-width="0.8"/></svg>';
+    html+='<span>'+dbName+'</span><span style="margin-left:auto;color:#333;font-size:10px">'+totalDocs+'</span></div>';
+    if(isOpen){ Object.keys(colls).forEach(function(coll){
+      var isActive=currentColl===coll;
+      html+='<div class="coll-item '+(isActive?'active':'')+'" onclick="selectCollection(\''+dbName+'\',\''+coll+'\')">';
+      html+='<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="1" fill="'+(isActive?'#1e3a5a':'#1a1a2e')+'" stroke="'+(isActive?'#4da6ff':'#333')+'" stroke-width="0.8"/><line x1="3" y1="5" x2="9" y2="5" stroke="'+(isActive?'#4da6ff':'#444')+'" stroke-width="0.7"/><line x1="3" y1="7" x2="7" y2="7" stroke="'+(isActive?'#4da6ff':'#444')+'" stroke-width="0.7"/></svg>';
+      html+=coll+'<span class="coll-count">'+colls[coll].length+'</span></div>';
+    }); }
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function toggleDb(name){ currentDb=(currentDb===name)?null:name; currentColl=null; renderSidebar(); }
+
+function selectCollection(dbN,coll){
+  currentDb=dbN; currentColl=coll; renderSidebar();
+  document.getElementById('welcome-screen').style.display='none';
+  document.getElementById('main-view').style.display='flex';
+  document.getElementById('coll-info').textContent=dbN+'.'+coll;
+  var tabs=document.querySelectorAll('.tab');
+  tabs.forEach(function(t){t.classList.remove('active');});
+  tabs[0].classList.add('active');
+  switchTabActive('documents'); applyFilter();
+}
+
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active'); switchTabActive(name);
+}
+
+function switchTabActive(name){
+  ['documents','aggregation','schema','indexes','cheatsheet'].forEach(function(t){
+    var el=document.getElementById(t+'-tab');
+    if(t===name) el.classList.remove('hidden'); else el.classList.add('hidden');
+  });
+  if(name==='schema') renderSchema();
+  if(name==='indexes') renderIndexes();
+  if(name==='cheatsheet') renderCheatSheet(currentFilter);
+}
+
+function applyFilter(){
+  if(!currentColl) return;
+  var docs=db[currentDb][currentColl].slice();
+  var fStr=document.getElementById('filter-input').value.trim();
+  if(fStr){ try{ var f=eval('('+fStr+')'); docs=docs.filter(function(d){return matchFilter(d,f);}); }
+    catch(e){ showNotif('Filter Error: '+e.message,'error'); return; } }
+  filteredDocs=docs; renderTable(docs);
+}
+
+function matchFilter(doc,filter){
+  return Object.entries(filter).every(function(entry){
+    var k=entry[0],v=entry[1];
+    if(k==='$or') return v.some(function(sub){return matchFilter(doc,sub);});
+    if(k==='$and') return v.every(function(sub){return matchFilter(doc,sub);});
+    if(typeof v==='object'&&v!==null&&!Array.isArray(v)){
+      return Object.entries(v).every(function(op){
+        var o=op[0],ov=op[1];
+        if(o==='$gt') return doc[k]>ov; if(o==='$gte') return doc[k]>=ov;
+        if(o==='$lt') return doc[k]<ov; if(o==='$lte') return doc[k]<=ov;
+        if(o==='$ne') return doc[k]!==ov;
+        if(o==='$in') return ov.indexOf(doc[k])!==-1;
+        if(o==='$nin') return ov.indexOf(doc[k])===-1;
+        if(o==='$exists') return ov?(doc[k]!==undefined):(doc[k]===undefined);
+        if(o==='$regex') return new RegExp(ov,'i').test(doc[k]);
+        return true;
+      });
+    }
+    return doc[k]===v;
+  });
+}
+
+function resetFilter(){ document.getElementById('filter-input').value=''; document.getElementById('proj-input').value=''; applyFilter(); }
+
+function renderTable(docs){
+  var wrap=document.getElementById('table-wrap'), bar=document.getElementById('stats-bar');
+  var total=db[currentDb][currentColl].length;
+  bar.innerHTML='<span>Showing <b style="color:#aaa">'+docs.length+'</b> of <b style="color:#aaa">'+total+'</b> documents</span><span style="color:#3a3a6a">|</span><span>Collection: <b style="color:#4da6ff">'+currentDb+'.'+currentColl+'</b></span>';
+  if(!docs.length){ wrap.innerHTML='<div class="empty-state"><div style="font-size:32px;margin-bottom:8px">&#9651;</div><span style="font-family:sans-serif">No documents match the filter</span></div>'; return; }
+  var allKeys=[],seen={};
+  docs.forEach(function(d){ Object.keys(d).forEach(function(k){ if(!seen[k]){seen[k]=1;allKeys.push(k);} }); });
+  var html='<table><thead><tr>';
+  allKeys.forEach(function(k){ html+='<th>'+k+'</th>'; });
+  html+='<th>Actions</th></tr></thead><tbody>';
+  docs.forEach(function(doc){
+    html+='<tr onclick="viewDoc(\''+doc._id+'\')">'; 
+    allKeys.forEach(function(k){
+      var v=doc[k],display,cls;
+      if(v===undefined){display='';cls='val-null';}
+      else if(v===null){display='null';cls='val-null';}
+      else if(k==='_id'){display='"'+String(v)+'"';cls='val-id';}
+      else if(typeof v==='string'){display='"'+v+'"';cls='val-str';}
+      else if(typeof v==='number'){display=v.toLocaleString();cls='val-num';}
+      else if(typeof v==='boolean'){display=String(v);cls='val-bool';}
+      else if(Array.isArray(v)){display='Array('+v.length+')';cls='val-arr';}
+      else if(typeof v==='object'){display='{...}';cls='val-obj';}
+      else{display=String(v);cls='';}
+      html+='<td class="'+cls+'" title="'+String(v).replace(/"/g,'&quot;')+'">'+display+'</td>';
+    });
+    html+='<td class="action-cell" onclick="event.stopPropagation()"><button class="btn btn-secondary btn-sm" onclick="openEdit(\''+doc._id+'\')" title="Edit">&#9998;</button> <button class="btn btn-danger btn-sm" onclick="deleteDoc(\''+doc._id+'\')" title="Delete">&#128465;</button></td></tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+function viewDoc(id){
+  var doc=db[currentDb][currentColl].find(function(d){return d._id===id;}); if(!doc) return;
+  showModal('<h3>&#128196; Document View</h3><div class="doc-view">'+syntaxHighlight(JSON.stringify(doc,null,2))+'</div><div class="modal-btns"><button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-warn" onclick="closeModal();openEdit(\''+id+'\')">&#9998; Edit</button></div>');
+}
+
+function syntaxHighlight(json){
+  json=json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,function(match){
+    var cls='val-num';
+    if(/^"/.test(match)){if(/:$/.test(match)){return'<span style="color:#9cdcfe">'+match+'</span>';}else cls='val-str';}
+    else if(/true|false/.test(match)){cls='val-bool';}else if(/null/.test(match)){cls='val-null';}
+    return'<span class="'+cls+'">'+match+'</span>';
+  });
+}
+
+function openInsert(){
+  var samples={consents:'{\n  "subjectId": "sub006",\n  "subjectName": "ชื่อ นามสกุล",\n  "email": "user@example.com",\n  "purposeId": "pur001",\n  "purposeName": "การตลาดและโปรโมชัน",\n  "status": "granted",\n  "channel": "web",\n  "version": "2.1",\n  "consentDate": "2024-06-01T10:00:00Z",\n  "withdrawable": true\n}'};
+  var sample=samples[currentColl]||'{\n  "field": "value"\n}';
+  showModal('<h3>&#43; Insert Document</h3><label>Document (JSON)</label><textarea id="insert-json" style="height:240px">'+sample+'</textarea><div class="modal-err" id="insert-err"></div><div class="modal-btns"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-success" onclick="doInsert()">Insert Document</button></div>');
+}
+function doInsert(){ var raw=document.getElementById('insert-json').value; try{ var doc=eval('('+raw+')'); if(!doc._id)doc._id=genId(); db[currentDb][currentColl].push(doc); closeModal();applyFilter();renderSidebar();showNotif('Inserted 1 document','success'); }catch(e){ document.getElementById('insert-err').textContent='JSON Error: '+e.message; } }
+
+function openEdit(id){ var doc=db[currentDb][currentColl].find(function(d){return d._id===id;}); if(!doc) return; showModal('<h3>&#9998; Edit Document</h3><label>Document (JSON)</label><textarea id="edit-json" style="height:260px">'+JSON.stringify(doc,null,2)+'</textarea><div class="modal-err" id="edit-err"></div><div class="modal-btns"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-warn" onclick="doUpdate(\''+id+'\')">&#10003; Update</button></div>'); }
+function doUpdate(id){ var raw=document.getElementById('edit-json').value; try{ var updated=eval('('+raw+')'); var idx=db[currentDb][currentColl].findIndex(function(d){return d._id===id;}); db[currentDb][currentColl][idx]=updated; closeModal();applyFilter();showNotif('Updated 1 document','warning'); }catch(e){ document.getElementById('edit-err').textContent='JSON Error: '+e.message; } }
+function deleteDoc(id){ if(!confirm('Delete document "'+id+'"?')) return; db[currentDb][currentColl]=db[currentDb][currentColl].filter(function(d){return d._id!==id;}); applyFilter();renderSidebar();showNotif('Deleted 1 document','error'); }
+function exportDocs(){ if(!filteredDocs.length){showNotif('No documents to export','error');return;} var blob=new Blob([JSON.stringify(filteredDocs,null,2)],{type:'application/json'}); var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=currentDb+'_'+currentColl+'.json';a.click();showNotif('Exported '+filteredDocs.length+' documents','success'); }
+
+function renderSchema(){
+  if(!currentColl) return;
+  var docs=db[currentDb][currentColl], fields={};
+  docs.forEach(function(doc){ Object.entries(doc).forEach(function(entry){ var k=entry[0],v=entry[1]; if(!fields[k])fields[k]={types:{},count:0}; fields[k].count++; var t=Array.isArray(v)?'Array':v===null?'Null':typeof v; t=t.charAt(0).toUpperCase()+t.slice(1); fields[k].types[t]=(fields[k].types[t]||0)+1; }); });
+  var total=docs.length;
+  var html='<div style="margin-bottom:14px;font-family:sans-serif"><span style="color:#4da6ff;font-size:13px;font-weight:600">'+currentDb+'.'+currentColl+'</span><span style="color:#555;font-size:12px;margin-left:10px">('+total+' docs, '+Object.keys(fields).length+' fields)</span></div>';
+  html+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Field</th><th style="padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Type</th><th style="padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Coverage</th><th style="padding:6px 0;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a;text-align:right">%</th></tr></thead><tbody>';
+  Object.entries(fields).forEach(function(entry){ var f=entry[0],info=entry[1]; var pct=Math.round(info.count/total*100); var types=Object.keys(info.types).join(', '); html+='<tr><td style="padding:8px 0;color:#e0e0e0;font-size:12px">'+f+'</td><td style="padding:8px 8px"><span class="schema-type">'+types+'</span></td><td style="padding:8px 8px"><div class="schema-bar-wrap"><div class="schema-bar" style="width:'+pct+'%"></div></div></td><td style="padding:8px 0;text-align:right" class="schema-pct">'+pct+'%</td></tr>'; });
+  html+='</tbody></table>';
+  document.getElementById('schema-content').innerHTML=html;
+}
+
+function renderIndexes(){
+  var html='<div style="margin-bottom:14px;font-family:sans-serif"><span style="color:#4da6ff;font-size:13px;font-weight:600">'+currentDb+'.'+currentColl+'</span> <span style="color:#555;font-size:12px">Indexes</span></div>';
+  html+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Name</th><th style="padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Definition</th><th style="padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Type</th><th style="padding:8px 12px;color:#555;font-size:11px;font-family:sans-serif;border-bottom:1px solid #2a2a4a">Unique</th></tr></thead><tbody>';
+  html+='<tr><td style="padding:8px 12px;color:#4da6ff;font-size:12px;border-bottom:1px solid #1e1e38">_id_</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ _id: 1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-blue">Regular</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-green">Yes</span></td></tr>';
+  if(currentColl==='consents'){ html+='<tr><td style="padding:8px 12px;color:#4da6ff;font-size:12px;border-bottom:1px solid #1e1e38">subjectId_1</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ subjectId: 1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-blue">Regular</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-gray">No</span></td></tr><tr><td style="padding:8px 12px;color:#4da6ff;font-size:12px;border-bottom:1px solid #1e1e38">status_1_date_-1</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38" class="val-str">{ status: 1, consentDate: -1 }</td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-amber">Compound</span></td><td style="padding:8px 12px;border-bottom:1px solid #1e1e38"><span class="badge badge-gray">No</span></td></tr>'; }
+  html+='</tbody></table><div style="margin-top:14px;display:flex;gap:8px"><button class="btn btn-secondary" onclick="openCreateIndex()">&#43; Create Index</button><button class="btn btn-secondary" onclick="showNotif(\'Refreshed\',\'success\')">&#8635; Refresh</button></div>';
+  document.getElementById('indexes-content').innerHTML=html;
+}
+function openCreateIndex(){ showModal('<h3>&#128196; Create Index</h3><label>Field Name</label><input id="idx-field" placeholder="e.g. subjectId, status"/><label>Type</label><select id="idx-type"><option value="1">Ascending (1)</option><option value="-1">Descending (-1)</option><option value="text">Text</option></select><label>Unique</label><select id="idx-unique"><option value="false">No</option><option value="true">Yes</option></select><div class="modal-btns"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createIndexDemo()">Create</button></div>'); }
+function createIndexDemo(){ var f=document.getElementById('idx-field').value||'field'; var t=document.getElementById('idx-type').value; closeModal();showNotif('Index created: { '+f+': '+t+' }','success'); }
+
+function addStage(){ aggrStages.push({op:'$match',code:'{}'}); renderAggrStages(); }
+function renderAggrStages(){
+  var el=document.getElementById('aggr-stages');
+  if(!aggrStages.length){ el.innerHTML='<div style="color:#333;font-size:12px;font-family:sans-serif;padding:8px 0">ยังไม่มี Stage — คลิก "+ Add Stage"</div>'; return; }
+  var ops=['$match','$group','$sort','$limit','$skip','$project','$unwind','$count','$addFields'];
+  var html=aggrStages.map(function(s,i){ var opts=ops.map(function(op){return'<option value="'+op+'"'+(s.op===op?' selected':'')+'>'+op+'</option>';}).join(''); return'<div class="aggr-stage"><div class="aggr-stage-header"><select class="aggr-op-select" onchange="aggrStages['+i+'].op=this.value">'+opts+'</select><span style="color:#444;font-size:11px;font-family:sans-serif">Stage '+(i+1)+'</span><button class="btn btn-danger btn-sm" onclick="removeStage('+i+')" style="margin-left:auto">&#215;</button></div><textarea class="aggr-textarea" onchange="aggrStages['+i+'].code=this.value" oninput="aggrStages['+i+'].code=this.value">'+s.code+'</textarea></div>'; }).join('');
+  el.innerHTML=html;
+}
+function removeStage(i){ aggrStages.splice(i,1); renderAggrStages(); }
+function clearAggr(){ aggrStages=[]; renderAggrStages(); document.getElementById('aggr-results').innerHTML='<div style="color:#444;font-size:12px;font-family:sans-serif">ผลลัพธ์จะแสดงที่นี่...</div>'; }
+
+function runAggr(){
+  if(!currentColl){showNotif('กรุณาเลือก Collection ก่อน','error');return;}
+  var docs=db[currentDb][currentColl].slice();
+  try{
+    aggrStages.forEach(function(s){
+      var arg=eval('('+s.code+')');
+      if(s.op==='$match') docs=docs.filter(function(d){return matchFilter(d,arg);});
+      else if(s.op==='$limit') docs=docs.slice(0,arg);
+      else if(s.op==='$skip') docs=docs.slice(arg);
+      else if(s.op==='$sort'){ var ent=Object.entries(arg); docs.sort(function(a,b){for(var i=0;i<ent.length;i++){var k=ent[i][0],v=ent[i][1];if(a[k]<b[k])return -v;if(a[k]>b[k])return v;}return 0;}); }
+      else if(s.op==='$count'){ var r={}; r[arg]=docs.length; docs=[r]; }
+      else if(s.op==='$project') docs=docs.map(function(d){var r={};Object.entries(arg).forEach(function(e){if(e[1])r[e[0]]=d[e[0]];});return r;});
+      else if(s.op==='$addFields') docs=docs.map(function(d){var r=Object.assign({},d);Object.entries(arg).forEach(function(e){var k=e[0],v=e[1];if(typeof v==='string'&&v.startsWith('$'))r[k]=d[v.slice(1)];else r[k]=v;});return r;});
+      else if(s.op==='$unwind'){ var field=arg.replace('$','');var nd=[];docs.forEach(function(d){if(Array.isArray(d[field])){d[field].forEach(function(it){var x=Object.assign({},d);x[field]=it;nd.push(x);});}else{nd.push(d);}});docs=nd; }
+      else if(s.op==='$group'){
+        var groups={},order=[];
+        docs.forEach(function(d){
+          var kv;
+          if(arg._id===null)kv='null';
+          else if(typeof arg._id==='string'&&arg._id.startsWith('$'))kv=d[arg._id.slice(1)];
+          else kv=JSON.stringify(arg._id);
+          if(!groups[kv]){groups[kv]={_id:arg._id===null?null:kv};order.push(kv);}
+          Object.entries(arg).forEach(function(e){var k=e[0],v=e[1];if(k==='_id')return;
+            if(v.$sum!==undefined){var f=typeof v.$sum==='string'?v.$sum.replace('$',''):null;groups[kv][k]=(groups[kv][k]||0)+(f?(d[f]||0):v.$sum);}
+            if(v.$count!==undefined)groups[kv][k]=(groups[kv][k]||0)+1;
+            if(v.$avg!==undefined){var f2=v.$avg.replace('$','');groups[kv][k+'__s']=(groups[kv][k+'__s']||0)+(d[f2]||0);groups[kv][k+'__n']=(groups[kv][k+'__n']||0)+1;groups[kv][k]=Math.round(groups[kv][k+'__s']/groups[kv][k+'__n']);}
+            if(v.$max!==undefined){var f3=v.$max.replace('$','');groups[kv][k]=groups[kv][k]===undefined?d[f3]:Math.max(groups[kv][k],d[f3]);}
+            if(v.$min!==undefined){var f4=v.$min.replace('$','');groups[kv][k]=groups[kv][k]===undefined?d[f4]:Math.min(groups[kv][k],d[f4]);}
+            if(v.$push!==undefined){var f5=v.$push.replace('$','');if(!groups[kv][k])groups[kv][k]=[];groups[kv][k].push(d[f5]);}
+          });
+        });
+        docs=order.map(function(k){var r=Object.assign({},groups[k]);Object.keys(r).forEach(function(rk){if(rk.endsWith('__s')||rk.endsWith('__n'))delete r[rk];});return r;});
+      }
+    });
+    var resEl=document.getElementById('aggr-results');
+    resEl.innerHTML='<div style="color:#28c840;font-size:11px;font-family:sans-serif;margin-bottom:8px">&#10003; Pipeline completed — '+docs.length+' document(s)</div><div class="doc-view">'+syntaxHighlight(JSON.stringify(docs,null,2))+'</div>';
+    showNotif('Pipeline ran — '+docs.length+' results','success');
+  }catch(e){ document.getElementById('aggr-results').innerHTML='<div style="color:#e24b4a;font-size:12px;font-family:sans-serif">&#9888; Error: '+e.message+'</div>';showNotif('Error: '+e.message,'error'); }
+}
+
+function showModal(content){ var bg=document.createElement('div');bg.className='modal-bg';bg.id='modal-bg';bg.innerHTML='<div class="modal">'+content+'</div>';bg.addEventListener('click',function(e){if(e.target===bg)closeModal();});document.body.appendChild(bg); }
+function closeModal(){ var m=document.getElementById('modal-bg');if(m)m.remove(); }
+function showNotif(msg,type){ var el=document.createElement('div');el.className='notif '+(type||'');el.textContent=msg;document.body.appendChild(el);setTimeout(function(){el.style.opacity='0';setTimeout(function(){el.remove();},300);},2500); }
+
+currentDb = 'consentdb';
+currentColl = 'consents';
+renderSidebar();
+document.getElementById('welcome-screen').style.display = 'none';
+document.getElementById('main-view').style.display = 'flex';
+document.getElementById('coll-info').textContent = 'consentdb.consents';
+applyFilter();
+renderAggrStages();
+document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&e.key==='Enter')applyFilter(); if(e.key==='Escape')closeModal(); });
+</script>
+</body>
+</html>
