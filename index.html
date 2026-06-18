@@ -31,8 +31,11 @@ body{font-family:'Courier New',monospace;font-size:13px;background:#0d0d1a;color
 .coll-count{margin-left:auto;color:#444;font-size:10px;background:#1e1e38;padding:1px 6px;border-radius:8px}
 .sidebar-divider{border:none;border-top:1px solid #1e1e38;margin:8px 0}
 .content{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.tabs{display:flex;background:#12121f;border-bottom:1px solid #2a2a4a;padding:0 12px;overflow-x:auto}
-.tabs::-webkit-scrollbar{height:0}
+.tabs{display:flex;background:#12121f;border-bottom:1px solid #2a2a4a;padding:0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#3a3a6a #12121f;cursor:grab}
+.tabs.dragging{cursor:grabbing;user-select:none}
+.tabs::-webkit-scrollbar{height:4px}
+.tabs::-webkit-scrollbar-track{background:#12121f}
+.tabs::-webkit-scrollbar-thumb{background:#3a3a6a;border-radius:2px}
 .tab{padding:9px 14px;font-size:12px;cursor:pointer;color:#666;border-bottom:2px solid transparent;transition:all .15s;font-family:sans-serif;white-space:nowrap;flex-shrink:0}
 .tab:hover{color:#aaa}
 .tab.active{color:#4da6ff;border-bottom-color:#4da6ff}
@@ -2338,6 +2341,44 @@ document.getElementById('coll-info').textContent = 'consentdb.consents';
 applyFilter();
 renderAggrStages();
 document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&e.key==='Enter')applyFilter(); if(e.key==='Escape')closeModal(); });
+
+// ── Tab bar: drag-to-scroll (mouse/trackpad บน Windows) ──
+(function(){
+  var tabs = document.getElementById('tab-bar');
+  if(!tabs) return;
+  var isDown = false, startX, scrollLeft, didDrag = false;
+  tabs.addEventListener('mousedown', function(e){
+    if(e.button !== 0) return;
+    isDown = true;
+    didDrag = false;
+    tabs.classList.add('dragging');
+    startX = e.pageX - tabs.offsetLeft;
+    scrollLeft = tabs.scrollLeft;
+  });
+  document.addEventListener('mouseup', function(){
+    isDown = false;
+    tabs.classList.remove('dragging');
+  });
+  document.addEventListener('mousemove', function(e){
+    if(!isDown) return;
+    var x = e.pageX - tabs.offsetLeft;
+    var walk = x - startX;
+    if(Math.abs(walk) > 3) didDrag = true;
+    tabs.scrollLeft = scrollLeft - walk;
+  });
+  // กัน click ถ้า drag ไป
+  tabs.addEventListener('click', function(e){
+    if(didDrag){ e.stopImmediatePropagation(); didDrag = false; }
+  }, true);
+  // Wheel แนวนอน / Shift+Wheel
+  tabs.addEventListener('wheel', function(e){
+    if(e.deltaX !== 0) return;
+    if(e.shiftKey){
+      e.preventDefault();
+      tabs.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+})();
 </script>
 </body>
 </html>
