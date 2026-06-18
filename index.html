@@ -1605,7 +1605,8 @@ var CHEATS = [
     '  { <span class="hl-op">$match</span>: { <span class="hl-key">"status"</span>: <span class="hl-str">"granted"</span> } }',
     '])',
    ].join('\n'),
-   tryFilter:'', tryColl:'consents',
+   tryFilter:'', tryColl:'consents', tryIsAggr:true,
+   tryStages:[{"op": "$match", "code": "{ \"status\": \"granted\" }"}],
    note:'ใน Aggregation tab: เลือก <code>$match</code> แล้วพิมพ์ <code>{ "status": "granted" }</code>'},
 
   {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$group — จัดกลุ่มและสรุปข้อมูล',
@@ -1627,7 +1628,8 @@ var CHEATS = [
     '  <span class="hl-key">total</span>: { <span class="hl-op">$sum</span>: <span class="hl-num">1</span> }',
     '}',
    ].join('\n'),
-   tryFilter:'', tryColl:'consents',
+   tryFilter:'', tryColl:'consents', tryIsAggr:true,
+   tryStages:[{"op": "$group", "code": "{ _id: \"$status\", count: { \"$sum\": 1 } }"}, {"op": "$sort", "code": "{ count: -1 }"}],
    note:'SQL: <code>GROUP BY status, COUNT(*) as count</code> | <code>_id</code> = field ที่ใช้จัดกลุ่ม'},
 
   {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$project — กำหนด field ใน pipeline',
@@ -1645,7 +1647,8 @@ var CHEATS = [
     '  }',
     '])',
    ].join('\n'),
-   tryFilter:'', tryColl:'consents',
+   tryFilter:'', tryColl:'consents', tryIsAggr:true,
+   tryStages:[{"op": "$match", "code": "{ \"status\": \"granted\" }"}, {"op": "$project", "code": "{ subjectName: 1, purposeName: 1, consentDate: 1, _id: 0 }"}],
    note:'<code>1</code> = แสดง | <code>0</code> = ซ่อน | สามารถสร้าง field ใหม่ได้ด้วย expressions'},
 
   {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$sort + $limit — เรียงและจำกัด',
@@ -1657,7 +1660,8 @@ var CHEATS = [
     '  { <span class="hl-op">$limit</span>: <span class="hl-num">3</span> }',
     '])',
    ].join('\n'),
-   tryFilter:'', tryColl:'data_subjects',
+   tryFilter:'', tryColl:'data_subjects', tryIsAggr:true,
+   tryStages:[{"op": "$sort", "code": "{ activeConsents: -1 }"}, {"op": "$limit", "code": "3"}],
    note:'ลำดับของ stage สำคัญมาก — $sort ก่อน $limit เสมอ เพื่อประสิทธิภาพ'},
 
   {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$unwind — แตก array',
@@ -1669,7 +1673,8 @@ var CHEATS = [
     '  { <span class="hl-op">$project</span>: { <span class="hl-key">"name"</span>: <span class="hl-num">1</span>, <span class="hl-key">"dataTypes"</span>: <span class="hl-num">1</span> } }',
     '])',
    ].join('\n'),
-   tryFilter:'', tryColl:'purposes',
+   tryFilter:'', tryColl:'purposes', tryIsAggr:true,
+   tryStages:[{"op": "$unwind", "code": "\"$dataTypes\""}, {"op": "$project", "code": "{ name: 1, dataTypes: 1 }"}],
    note:'1 purpose มี 3 dataTypes → จะได้ 3 document แทนที่จะเป็น 1'},
 
   {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'Pipeline ตัวอย่างจริง — วิเคราะห์ Consent',
@@ -1686,7 +1691,8 @@ var CHEATS = [
     '  { <span class="hl-op">$sort</span>: { <span class="hl-key">"total"</span>: <span class="hl-num">-1</span> } }',
     '])',
    ].join('\n'),
-   tryFilter:'', tryColl:'consents',
+   tryFilter:'', tryColl:'consents', tryIsAggr:true,
+   tryStages:[{"op": "$group", "code": "{\n  _id: \"$purposeName\",\n  total:     { \"$sum\": 1 },\n  granted:   { \"$sum\": { \"$cond\": [{ \"$eq\": [\"$status\",\"granted\"]},1,0] } },\n  withdrawn: { \"$sum\": { \"$cond\": [{ \"$eq\": [\"$status\",\"withdrawn\"]},1,0] } }\n}"}, {"op": "$sort", "code": "{ total: -1 }"}],
    note:'<b>Aggregation tab:</b> Stage 1 = $group ใส่ body ด้านบน | Stage 2 = $sort ใส่ <code>{ "total": -1 }</code>'},
 
   // ===== INDEX =====
@@ -2023,12 +2029,23 @@ function renderCheatSheet(filter) {
     }
 
     if (hasTry) {
-      var previewText = c.tryFilter ? c.tryFilter : '{}';
+      var isAggr = !!c.tryIsAggr;
+      var previewText = isAggr
+        ? (c.tryStages ? c.tryStages.length + ' stage' + (c.tryStages.length > 1 ? 's' : '') + ' — ' + c.tryStages.map(function(s){return s.op;}).join(' → ') : 'pipeline')
+        : (c.tryFilter ? c.tryFilter : '{}');
+      var labelIcon = isAggr ? '&#128200;' : '&#128269;';
+      var labelTitle = isAggr ? 'Pipeline ที่จะโหลดใน Aggregation:' : 'Filter ที่จะใส่ในช่อง:';
+      var btnLabel = isAggr ? '&#9654; ลองใน Aggregation' : '&#9654; ลองใน Simulator';
+      var btnColor = isAggr ? '#1a2a0a;border-color:#28c840' : '#1e2a4a;border-color:#2a3a6a';
+      var textColor = isAggr ? '#28c840' : '#4da6ff';
+      var onclickVal = isAggr
+        ? "tryCmd('" + c.tryColl + "','','" + encodeURIComponent(JSON.stringify(c.tryStages)) + "')"
+        : "tryCmd('" + c.tryColl + "','" + encodeURIComponent(c.tryFilter) + "')";
       html += '<div style="margin-top:10px;margin-bottom:4px">';
-      html += '<div style="font-size:10px;color:#555;font-family:sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">&#128269; Filter ที่จะใส่ในช่อง:</div>';
-      html += '<div style="display:flex;align-items:center;gap:8px;background:#060610;border:1px solid #2a3a6a;border-radius:6px;padding:7px 10px">';
-      html += '<span style="flex:1;font-family:\'Courier New\',monospace;font-size:14px;color:#4da6ff;word-break:break-all">' + previewText + '</span>';
-      html += '<button class="try-btn" style="flex-shrink:0;margin-top:0" onclick="tryCmd(\'' + c.tryColl + '\',\'' + encodeURIComponent(c.tryFilter) + '\')">&#9654; ลองใน Simulator</button>';
+      html += '<div style="font-size:10px;color:#555;font-family:sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">' + labelIcon + ' ' + labelTitle + '</div>';
+      html += '<div style="display:flex;align-items:center;gap:8px;background:#060610;border:1px solid ' + (isAggr ? '#1a4a1a' : '#2a3a6a') + ';border-radius:6px;padding:7px 10px">';
+      html += '<span style="flex:1;font-family:\'Courier New\',monospace;font-size:13px;color:' + textColor + ';word-break:break-all">' + previewText + '</span>';
+      html += '<button class="try-btn" style="flex-shrink:0;margin-top:0;background:#060610;border:1px solid ' + (isAggr ? '#28c840' : '#2a3a6a') + ';color:' + textColor + '" onclick="' + onclickVal + '">' + btnLabel + '</button>';
       html += '</div>';
       html += '<div style="font-size:10px;color:#444;font-family:sans-serif;margin-top:4px">collection: <span style="color:#3a6a6a">' + c.tryColl + '</span></div>';
       html += '</div>';
@@ -2086,30 +2103,45 @@ function copyRaw(btn, enc) {
   });
 }
 
-function tryCmd(coll, filterEnc) {
-  var filter = decodeURIComponent(filterEnc);
-  // เปิด db ถ้ายังไม่เปิด
+function tryCmd(coll, filterEnc, stagesEnc) {
   currentDb = 'consentdb';
   currentColl = coll;
   renderSidebar();
-  // แสดง main view
   document.getElementById('welcome-screen').style.display = 'none';
   document.getElementById('main-view').style.display = 'flex';
   document.getElementById('coll-info').textContent = 'consentdb.' + coll;
-  // สลับไป Documents tab
-  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
-  document.querySelectorAll('.tab')[0].classList.add('active');
-  switchTabActive('documents');
-  // ใส่ filter แล้ว run
-  document.getElementById('filter-input').value = filter;
-  document.getElementById('proj-input').value = '';
-  applyFilter();
-  // flash กล่อง filter ให้เห็นชัด
-  var inp = document.getElementById('filter-input');
-  inp.style.borderColor = '#4da6ff';
-  inp.style.boxShadow = '0 0 0 2px rgba(77,166,255,0.25)';
-  setTimeout(function(){ inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1200);
-  showNotif('โหลด ' + coll + (filter ? ' + filter แล้ว!' : ' แล้ว!'), 'success');
+
+  if (stagesEnc) {
+    // ===== โหมด Aggregation =====
+    var stages = JSON.parse(decodeURIComponent(stagesEnc));
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    switchTabActive('aggregation');
+    aggrStages = stages;
+    renderAggrStages();
+    // flash panel
+    var panel = document.getElementById('aggr-stages');
+    if (panel) {
+      panel.style.outline = '2px solid #4da6ff';
+      panel.style.borderRadius = '6px';
+      setTimeout(function(){ panel.style.outline = ''; }, 1400);
+    }
+    showNotif('โหลด pipeline ใน Aggregation แล้ว — กด ▶ Run Pipeline!', 'success');
+  } else {
+    // ===== โหมด Documents (find) =====
+    var filter = decodeURIComponent(filterEnc || '');
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    switchTabActive('documents');
+    document.getElementById('filter-input').value = filter;
+    document.getElementById('proj-input').value = '';
+    applyFilter();
+    var inp = document.getElementById('filter-input');
+    inp.style.borderColor = '#4da6ff';
+    inp.style.boxShadow = '0 0 0 2px rgba(77,166,255,0.25)';
+    setTimeout(function(){ inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1200);
+    showNotif('โหลด ' + coll + (filter ? ' + filter แล้ว!' : ' แล้ว!'), 'success');
+  }
 }
 
 // ===== REST OF APP =====
