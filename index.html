@@ -1251,11 +1251,11 @@ td{font-size:13px;padding:9px 13px;max-width:240px;}
           </div>
         </div>
 
-
         <!-- Join Builder -->
-        <div class="tab-content hidden" id="joinbuilder-tab" style="overflow:hidden;display:none;flex-direction:column;gap:0">
-          <div id="jb-root" style="display:flex;flex-direction:column;height:100%;overflow:hidden"></div>
+        <div class="tab-content hidden" id="joinbuilder-tab">
+          <div id="jb-root"></div>
         </div>
+
       </div>
   </div>
 </div>
@@ -2214,7 +2214,12 @@ function switchTab(name,el){
 function switchTabActive(name){
   ['documents','aggregation','schema','indexes','cheatsheet','nosql','jsonbson','datatypes','design','transaction','errors','whymongo','pricing','joinbuilder'].forEach(function(t){
     var el=document.getElementById(t+'-tab');
-    if(t===name) el.classList.remove('hidden'); else el.classList.add('hidden');
+    if(!el) return;
+    if(t===name){
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
   });
   if(name==='schema') renderSchema();
   if(name==='indexes') renderIndexes();
