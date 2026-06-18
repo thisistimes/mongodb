@@ -1252,8 +1252,8 @@ td{font-size:13px;padding:9px 13px;max-width:240px;}
         </div>
 
         <!-- Join Builder -->
-        <div class="tab-content hidden" id="joinbuilder-tab">
-          <div id="jb-root"></div>
+        <div class="tab-content hidden" id="joinbuilder-tab" style="overflow:hidden;padding:0">
+          <div id="jb-root" style="display:flex;flex-direction:column;height:100%;overflow:hidden"></div>
         </div>
 
       </div>
@@ -1720,6 +1720,46 @@ var CHEATS = [
    tryFilter:'', tryColl:'consents', tryIsAggr:true,
    tryStages:[{"op":"$lookup","code":"{\n  from: \"purposes\",\n  localField: \"purposeId\",\n  foreignField: \"_id\",\n  as: \"purposeInfo\"\n}"},{"op":"$project","code":"{ subjectName: 1, status: 1, purposeId: 1, purposeInfo: 1 }"}],
    note:'ผลลัพธ์: field <code>purposeInfo</code> เป็น array | ใช้ <code>$unwind: "$purposeInfo"</code> ต่อถ้าต้องการแบน | <b>เหมาะกับ: </b>ดึงข้อมูลข้าม collection ใน MongoDB'},
+
+
+  {cat:'aggr', badge:'cb-aggr', badgeText:'Aggregation', title:'$in + $arrayElemAt — เช็คว่า "name" อยู่ใน dataTypes ไหม',
+   desc:'ดึง purpose มา join แล้วเช็คว่า field "name" อยู่ใน array dataTypes ของ purpose หรือไม่',
+   code:[
+    '<span class="hl-cmt">// โจทย์: consents join purposes แล้วเช็คว่า "name" อยู่ใน dataTypes</span>',
+    '<span class="hl-fn">db</span>.<span class="hl-field">consents</span>.<span class="hl-fn">aggregate</span>([',
+    '',
+    '  <span class="hl-cmt">// Stage 1: join purposes มา</span>',
+    '  { <span class="hl-op">$lookup</span>: {',
+    '    <span class="hl-key">from</span>: <span class="hl-str">"purposes"</span>,',
+    '    <span class="hl-key">localField</span>: <span class="hl-str">"purposeId"</span>,',
+    '    <span class="hl-key">foreignField</span>: <span class="hl-str">"_id"</span>,',
+    '    <span class="hl-key">as</span>: <span class="hl-str">"purposeInfo"</span>',
+    '  } },',
+    '',
+    '  <span class="hl-cmt">// Stage 2: แกะ array → object + เช็ค $in</span>',
+    '  { <span class="hl-op">$addFields</span>: {',
+    '    <span class="hl-key">purposeDetail</span>: { <span class="hl-op">$arrayElemAt</span>: [<span class="hl-str">"$purposeInfo"</span>, <span class="hl-num">0</span>] },',
+    '    <span class="hl-key">nameInDataTypes</span>: {',
+    '      <span class="hl-op">$in</span>: [ <span class="hl-str">"name"</span>, {',
+    '        <span class="hl-op">$ifNull</span>: [{ <span class="hl-op">$arrayElemAt</span>: [<span class="hl-str">"$purposeInfo.dataTypes"</span>, <span class="hl-num">0</span>] }, []]',
+    '      }]',
+    '    }',
+    '  } },',
+    '',
+    '  <span class="hl-cmt">// Stage 3: แสดงแค่ field ที่ต้องการ</span>',
+    '  { <span class="hl-op">$project</span>: {',
+    '    <span class="hl-key">subjectName</span>: <span class="hl-num">1</span>,',
+    '    <span class="hl-key">status</span>: <span class="hl-num">1</span>,',
+    '    <span class="hl-key">purposeId</span>: <span class="hl-num">1</span>,',
+    '    <span class="hl-str">"purposeDetail.name"</span>: <span class="hl-num">1</span>,',
+    '    <span class="hl-str">"purposeDetail.dataTypes"</span>: <span class="hl-num">1</span>,',
+    '    <span class="hl-key">nameInDataTypes</span>: <span class="hl-num">1</span>',
+    '  } }',
+    '])',
+   ].join('\n'),
+   tryFilter:'', tryColl:'consents', tryIsAggr:true,
+   tryStages:[{"op": "$lookup", "code": "{\n  from: \"purposes\",\n  localField: \"purposeId\",\n  foreignField: \"_id\",\n  as: \"purposeInfo\"\n}"}, {"op": "$addFields", "code": "{\n  purposeDetail: { $arrayElemAt: [\"$purposeInfo\", 0] },\n  nameInDataTypes: {\n    $in: [\"name\", {\n      $ifNull: [{ $arrayElemAt: [\"$purposeInfo.dataTypes\", 0] }, []]\n    }]\n  }\n}"}, {"op": "$project", "code": "{\n  subjectName: 1,\n  status: 1,\n  purposeId: 1,\n  \"purposeDetail.name\": 1,\n  \"purposeDetail.dataTypes\": 1,\n  nameInDataTypes: 1\n}"}],
+   note:'<code>$arrayElemAt: ["$purposeInfo", 0]</code> แกะ array → object ตัวแรก | <code>$in: ["name", "$dataTypes"]</code> เช็คว่า "name" อยู่ใน array | <code>$ifNull</code> ป้องกัน null ถ้า join ไม่พบ | ผล <code>nameInDataTypes</code> จะได้ <code>true/false</code>'},
 
   // ===== INDEX =====
   {cat:'index', badge:'cb-index', badgeText:'Index', title:'createIndex() — สร้าง Index',
@@ -2345,12 +2385,123 @@ function addStage(){ aggrStages.push({op:'$match',code:'{}'}); renderAggrStages(
 function renderAggrStages(){
   var el=document.getElementById('aggr-stages');
   if(!aggrStages.length){ el.innerHTML='<div style="color:#333;font-size:14px;font-family:sans-serif;padding:8px 0">ยังไม่มี Stage — คลิก "+ Add Stage"</div>'; return; }
-  var ops=['$match','$group','$sort','$limit','$skip','$project','$unwind','$lookup','$count','$addFields'];
+  var ops=['$match','$group','$sort','$limit','$skip','$project','$unwind','$lookup','$count','$addFields','$set','$replaceRoot'];
   var html=aggrStages.map(function(s,i){ var opts=ops.map(function(op){return'<option value="'+op+'"'+(s.op===op?' selected':'')+'>'+op+'</option>';}).join(''); return'<div class="aggr-stage"><div class="aggr-stage-header"><select class="aggr-op-select" onchange="aggrStages['+i+'].op=this.value">'+opts+'</select><span style="color:#444;font-size:14px;font-family:sans-serif">Stage '+(i+1)+'</span><button class="btn btn-danger btn-sm" onclick="removeStage('+i+')" style="margin-left:auto">&#215;</button></div><textarea class="aggr-textarea" onchange="aggrStages['+i+'].code=this.value" oninput="aggrStages['+i+'].code=this.value">'+s.code+'</textarea></div>'; }).join('');
   el.innerHTML=html;
 }
 function removeStage(i){ aggrStages.splice(i,1); renderAggrStages(); }
 function clearAggr(){ aggrStages=[]; renderAggrStages(); document.getElementById('aggr-results').innerHTML='<div style="color:#444;font-size:14px;font-family:sans-serif">ผลลัพธ์จะแสดงที่นี่...</div>'; }
+
+// ── Expression evaluator สำหรับ $addFields/$set ──
+function evalExpr(expr, doc) {
+  if (expr === null || expr === undefined) return expr;
+  if (typeof expr === 'boolean' || typeof expr === 'number') return expr;
+  if (typeof expr === 'string') {
+    if (expr.startsWith('$$')) return expr; // system vars
+    if (expr.startsWith('$')) {
+      // dot-notation support: "$purposeInfo.name"
+      var path = expr.slice(1).split('.');
+      var val = doc;
+      for (var i=0; i<path.length; i++) {
+        if (val == null) return null;
+        val = Array.isArray(val) ? val.map(function(x){ return x[path[i]]; }) : val[path[i]];
+      }
+      return val;
+    }
+    return expr;
+  }
+  if (Array.isArray(expr)) return expr.map(function(e){ return evalExpr(e, doc); });
+  if (typeof expr === 'object') {
+    // ── accumulator / expression operators ──
+    if (expr.$arrayElemAt !== undefined) {
+      var arr = evalExpr(expr.$arrayElemAt[0], doc);
+      var idx = evalExpr(expr.$arrayElemAt[1], doc);
+      return Array.isArray(arr) ? (idx < 0 ? arr[arr.length+idx] : arr[idx]) : null;
+    }
+    if (expr.$in !== undefined) {
+      var needle = evalExpr(expr.$in[0], doc);
+      var haystack = evalExpr(expr.$in[1], doc);
+      return Array.isArray(haystack) && haystack.indexOf(needle) !== -1;
+    }
+    if (expr.$not !== undefined) {
+      return !evalExpr(expr.$not[0] !== undefined ? expr.$not[0] : expr.$not, doc);
+    }
+    if (expr.$eq !== undefined) {
+      return evalExpr(expr.$eq[0], doc) === evalExpr(expr.$eq[1], doc);
+    }
+    if (expr.$ne !== undefined) {
+      return evalExpr(expr.$ne[0], doc) !== evalExpr(expr.$ne[1], doc);
+    }
+    if (expr.$gt !== undefined) return evalExpr(expr.$gt[0],doc) > evalExpr(expr.$gt[1],doc);
+    if (expr.$gte !== undefined) return evalExpr(expr.$gte[0],doc) >= evalExpr(expr.$gte[1],doc);
+    if (expr.$lt !== undefined) return evalExpr(expr.$lt[0],doc) < evalExpr(expr.$lt[1],doc);
+    if (expr.$lte !== undefined) return evalExpr(expr.$lte[0],doc) <= evalExpr(expr.$lte[1],doc);
+    if (expr.$and !== undefined) return expr.$and.every(function(e){ return evalExpr(e,doc); });
+    if (expr.$or !== undefined) return expr.$or.some(function(e){ return evalExpr(e,doc); });
+    if (expr.$cond !== undefined) {
+      if (Array.isArray(expr.$cond)) {
+        return evalExpr(expr.$cond[0],doc) ? evalExpr(expr.$cond[1],doc) : evalExpr(expr.$cond[2],doc);
+      }
+      return evalExpr(expr.$cond.if,doc) ? evalExpr(expr.$cond.then,doc) : evalExpr(expr.$cond.else,doc);
+    }
+    if (expr.$ifNull !== undefined) {
+      var v = evalExpr(expr.$ifNull[0], doc);
+      return (v !== null && v !== undefined) ? v : evalExpr(expr.$ifNull[1], doc);
+    }
+    if (expr.$size !== undefined) {
+      var arr2 = evalExpr(expr.$size, doc);
+      return Array.isArray(arr2) ? arr2.length : 0;
+    }
+    if (expr.$filter !== undefined) {
+      var inputArr = evalExpr(expr.$filter.input, doc);
+      var asVar    = expr.$filter.as || 'this';
+      var cond     = expr.$filter.cond;
+      if (!Array.isArray(inputArr)) return [];
+      return inputArr.filter(function(item){
+        var innerDoc = Object.assign({}, doc);
+        innerDoc['$$'+asVar] = item;
+        innerDoc[asVar]      = item;
+        // replace $$asVar refs in cond
+        return evalExpr(cond, innerDoc);
+      });
+    }
+    if (expr.$map !== undefined) {
+      var inputArr2 = evalExpr(expr.$map.input, doc);
+      var asVar2    = expr.$map.as || 'this';
+      var inExpr    = expr.$map.in;
+      if (!Array.isArray(inputArr2)) return [];
+      return inputArr2.map(function(item){
+        var innerDoc2 = Object.assign({}, doc);
+        innerDoc2[asVar2] = item;
+        return evalExpr(inExpr, innerDoc2);
+      });
+    }
+    if (expr.$first !== undefined) {
+      var arr3 = evalExpr(expr.$first, doc);
+      return Array.isArray(arr3) ? arr3[0] : arr3;
+    }
+    if (expr.$last !== undefined) {
+      var arr4 = evalExpr(expr.$last, doc);
+      return Array.isArray(arr4) ? arr4[arr4.length-1] : arr4;
+    }
+    if (expr.$concat !== undefined) {
+      return expr.$concat.map(function(e){ return String(evalExpr(e,doc)||''); }).join('');
+    }
+    if (expr.$toUpper !== undefined) { var s=evalExpr(expr.$toUpper,doc); return s?String(s).toUpperCase():''; }
+    if (expr.$toLower !== undefined) { var s2=evalExpr(expr.$toLower,doc); return s2?String(s2).toLowerCase():''; }
+    if (expr.$toString !== undefined) { return String(evalExpr(expr.$toString,doc)); }
+    if (expr.$toInt !== undefined) { return parseInt(evalExpr(expr.$toInt,doc)); }
+    if (expr.$literal !== undefined) { return expr.$literal; }
+    if (expr.$mergeObjects !== undefined) {
+      return expr.$mergeObjects.reduce(function(acc,e){ return Object.assign(acc, evalExpr(e,doc)||{}); }, {});
+    }
+    // fallback: ถ้าไม่ใช่ operator ก็ eval แต่ละ field
+    var res = {};
+    Object.entries(expr).forEach(function(kv){ res[kv[0]] = evalExpr(kv[1], doc); });
+    return res;
+  }
+  return expr;
+}
 
 function runAggr(){
   if(!currentColl){showNotif('กรุณาเลือก Collection ก่อน','error');return;}
@@ -2364,7 +2515,22 @@ function runAggr(){
       else if(s.op==='$sort'){ var ent=Object.entries(arg); docs.sort(function(a,b){for(var i=0;i<ent.length;i++){var k=ent[i][0],v=ent[i][1];if(a[k]<b[k])return -v;if(a[k]>b[k])return v;}return 0;}); }
       else if(s.op==='$count'){ var r={}; r[arg]=docs.length; docs=[r]; }
       else if(s.op==='$project') docs=docs.map(function(d){var r={};Object.entries(arg).forEach(function(e){if(e[1])r[e[0]]=d[e[0]];});return r;});
-      else if(s.op==='$addFields') docs=docs.map(function(d){var r=Object.assign({},d);Object.entries(arg).forEach(function(e){var k=e[0],v=e[1];if(typeof v==='string'&&v.startsWith('$'))r[k]=d[v.slice(1)];else r[k]=v;});return r;});
+      else if(s.op==='$addFields'||s.op==='$set'){
+        docs=docs.map(function(d){
+          var r=Object.assign({},d);
+          Object.entries(arg).forEach(function(e){
+            r[e[0]] = evalExpr(e[1], r);
+          });
+          return r;
+        });
+      }
+      else if(s.op==='$replaceRoot'){
+        var nrField = arg.newRoot;
+        docs=docs.map(function(d){
+          var val = evalExpr(nrField, d);
+          return typeof val==='object'&&val!==null ? Object.assign({},val) : d;
+        });
+      }
       else if(s.op==='$unwind'){ var field=arg.replace('$','');var nd=[];docs.forEach(function(d){if(Array.isArray(d[field])){d[field].forEach(function(it){var x=Object.assign({},d);x[field]=it;nd.push(x);});}else{nd.push(d);}});docs=nd; }
       else if(s.op==='$lookup'){
         var fromColl=db[currentDb][arg.from]||[];
@@ -2454,199 +2620,306 @@ document.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&e.ke
 })();
 
 // =====================================================
-// JOIN BUILDER
+// JOIN BUILDER v2 — Multi-Join (n tables)
 // =====================================================
+
+// state: base collection + array of join steps
 var jbState = {
-  mode: 'lookup',       // 'lookup' | 'sql'
-  from: 'consents',
-  join1: 'consents',    // left table
-  join2: 'purposes',    // right table
-  localField: 'purposeId',
-  foreignField: '_id',
-  asAlias: 'purposeInfo',
-  joinType: 'inner',    // inner | left | right | full
-  extraStages: [],      // additional stages after $lookup
-  sqlOn1: 'purposeId',
-  sqlOn2: '_id',
-  preset: null,
+  base: 'consents',
+  steps: [
+    { coll:'purposes',      localField:'purposeId',  foreignField:'_id',       as:'purposeInfo',   joinType:'left' },
+    { coll:'data_subjects', localField:'subjectId',  foreignField:'_id',       as:'subjectInfo',   joinType:'left' },
+  ],
+  _resTab: 'mongo',
+  _codeTab: 'mongo',
 };
 
-var JB_PRESETS = [
+// สีแต่ละ collection (หมุนเวียน)
+var JB_COLORS = ['#4da6ff','#28c840','#f97316','#c084fc','#2dd4bf','#f472b6','#facc15'];
+
+var JB_MULTI_PRESETS = [
   {
-    label: 'consents + purposes (by purposeId)',
-    join1:'consents', join2:'purposes', local:'purposeId', foreign:'_id', as:'purposeInfo',
-    sqlOn1:'purposeId', sqlOn2:'_id',
-    desc:'ดึง consent แต่ละรายการพร้อม detail ของ purpose ที่เกี่ยวข้อง'
+    label:'consents + purposes + subjects',
+    desc:'consent พร้อม detail ของ purpose และเจ้าของข้อมูล (3 tables)',
+    base:'consents',
+    steps:[
+      { coll:'purposes',      localField:'purposeId', foreignField:'_id', as:'purposeInfo',  joinType:'left' },
+      { coll:'data_subjects', localField:'subjectId', foreignField:'_id', as:'subjectInfo',  joinType:'left' },
+    ]
   },
   {
-    label: 'consents + data_subjects (by subjectId)',
-    join1:'consents', join2:'data_subjects', local:'subjectId', foreign:'_id', as:'subjectInfo',
-    sqlOn1:'subjectId', sqlOn2:'_id',
-    desc:'ดึง consent พร้อมข้อมูลเจ้าของข้อมูล (data subject)'
+    label:'consents + purposes + subjects + requests',
+    desc:'consent ครบ 4 tables — purpose, subject, และ DSAR request',
+    base:'consents',
+    steps:[
+      { coll:'purposes',         localField:'purposeId', foreignField:'_id',       as:'purposeInfo',  joinType:'left' },
+      { coll:'data_subjects',    localField:'subjectId', foreignField:'_id',       as:'subjectInfo',  joinType:'left' },
+      { coll:'consent_requests', localField:'subjectId', foreignField:'subjectId', as:'requestInfo',  joinType:'left' },
+    ]
   },
   {
-    label: 'consent_requests + data_subjects (by subjectId)',
-    join1:'consent_requests', join2:'data_subjects', local:'subjectId', foreign:'_id', as:'subjectInfo',
-    sqlOn1:'subjectId', sqlOn2:'_id',
-    desc:'ดึง request พร้อมชื่อ-อีเมลเจ้าของข้อมูล'
+    label:'consents + logs + subjects',
+    desc:'consent พร้อม audit log และข้อมูล subject',
+    base:'consents',
+    steps:[
+      { coll:'consent_logs',  localField:'_id',      foreignField:'consentId', as:'auditLog',    joinType:'left' },
+      { coll:'data_subjects', localField:'subjectId', foreignField:'_id',      as:'subjectInfo', joinType:'left' },
+    ]
   },
   {
-    label: 'consent_requests + consents (by subjectId)',
-    join1:'consent_requests', join2:'consents', local:'subjectId', foreign:'subjectId', as:'subjectConsents',
-    sqlOn1:'subjectId', sqlOn2:'subjectId',
-    desc:'ดึง request พร้อม consent ทั้งหมดของแต่ละ subject'
-  },
-  {
-    label: 'consents + consent_logs (by _id=consentId)',
-    join1:'consents', join2:'consent_logs', local:'_id', foreign:'consentId', as:'auditLogs',
-    sqlOn1:'_id', sqlOn2:'consentId',
-    desc:'ดึง consent พร้อม audit log ของแต่ละรายการ'
+    label:'requests + subjects + consents',
+    desc:'DSAR request พร้อมข้อมูล subject และ consent ทั้งหมดของเขา',
+    base:'consent_requests',
+    steps:[
+      { coll:'data_subjects', localField:'subjectId', foreignField:'_id',       as:'subjectInfo',    joinType:'left' },
+      { coll:'consents',      localField:'subjectId', foreignField:'subjectId', as:'subjectConsents', joinType:'left' },
+    ]
   },
 ];
 
 function getJbFields(coll) {
   var docs = db['consentdb'][coll];
-  if (!docs || !docs.length) return [];
+  if (!docs || !docs.length) return ['_id'];
   var seen = {};
   docs.forEach(function(d){ Object.keys(d).forEach(function(k){ seen[k]=1; }); });
   return Object.keys(seen);
 }
 
+function jbCollOpts(selected) {
+  return Object.keys(db['consentdb']).map(function(c){
+    return '<option value="'+c+'"'+(c===selected?' selected':'')+'>'+c+'</option>';
+  }).join('');
+}
+
+function jbFieldOpts(coll, selected) {
+  return getJbFields(coll).map(function(f){
+    return '<option value="'+f+'"'+(f===selected?' selected':'')+'>'+f+'</option>';
+  }).join('');
+}
+
+function jbAddStep() {
+  var colls = Object.keys(db['consentdb']);
+  var used  = [jbState.base].concat(jbState.steps.map(function(s){ return s.coll; }));
+  var next  = colls.filter(function(c){ return used.indexOf(c) === -1; })[0] || colls[0];
+  var fields = getJbFields(next);
+  jbState.steps.push({ coll:next, localField:'_id', foreignField: fields[0]||'_id', as:next+'Info', joinType:'left' });
+  renderJoinBuilder();
+}
+
+function jbRemoveStep(i) {
+  jbState.steps.splice(i, 1);
+  renderJoinBuilder();
+}
+
+function jbApplyPreset(i) {
+  var p = JB_MULTI_PRESETS[i];
+  jbState.base  = p.base;
+  jbState.steps = p.steps.map(function(s){ return Object.assign({}, s); });
+  renderJoinBuilder();
+  setTimeout(runJoinBuilder, 80);
+}
+
+function jbUpdateBase(val) {
+  jbState.base = val;
+  renderJoinBuilder();
+}
+
+function jbUpdateStep(i, key, val) {
+  jbState.steps[i][key] = val;
+  if (key === 'coll') {
+    var fields = getJbFields(val);
+    jbState.steps[i].foreignField = fields[0] || '_id';
+    jbState.steps[i].as = val + 'Info';
+  }
+  renderJoinBuilder();
+}
+
+// ── สร้าง MongoDB aggregate code ──
+function jbMongoCode() {
+  var lines = ['db.' + jbState.base + '.aggregate(['];
+  jbState.steps.forEach(function(s) {
+    lines.push('  {');
+    lines.push('    $lookup: {');
+    lines.push('      from:         "' + s.coll + '",');
+    lines.push('      localField:   "' + s.localField + '",');
+    lines.push('      foreignField: "' + s.foreignField + '",');
+    lines.push('      as:           "' + s.as + '"');
+    lines.push('    }');
+    lines.push('  },');
+  });
+  lines.push('])');
+  return lines.join('\n');
+}
+
+// ── สร้าง SQL code ──
+function jbSqlCode() {
+  var aliases = ['a'];
+  var lines = ['SELECT'];
+  // select columns
+  lines.push('  a.*,');
+  jbState.steps.forEach(function(s, i) {
+    var alias = String.fromCharCode(98 + i); // b, c, d, ...
+    aliases.push(alias);
+    lines.push('  ' + alias + '.*' + (i < jbState.steps.length - 1 ? ',' : ''));
+  });
+  lines.push('FROM ' + jbState.base + ' a');
+  jbState.steps.forEach(function(s, i) {
+    var alias = aliases[i + 1];
+    var jkw = { left:'LEFT JOIN', inner:'INNER JOIN', right:'RIGHT JOIN', full:'FULL OUTER JOIN' }[s.joinType] || 'LEFT JOIN';
+    lines.push(jkw + ' ' + s.coll + ' ' + alias);
+    lines.push('  ON a.' + s.localField + ' = ' + alias + '.' + s.foreignField);
+  });
+  return lines.join('\n');
+}
+
+// ── Render UI ──
 function renderJoinBuilder() {
   var root = document.getElementById('jb-root');
   if (!root) return;
 
-  var colls = Object.keys(db['consentdb']);
-  var fields1 = getJbFields(jbState.join1);
-  var fields2 = getJbFields(jbState.join2);
+  var colors   = JB_COLORS;
+  var baseColor = colors[0];
 
-  // ── generate code snippets ──
-  var mongoCode = 'db.' + jbState.join1 + '.aggregate([\n'
-    + '  {\n'
-    + '    $lookup: {\n'
-    + '      from:         "' + jbState.join2 + '",\n'
-    + '      localField:   "' + jbState.localField + '",\n'
-    + '      foreignField: "' + jbState.foreignField + '",\n'
-    + '      as:           "' + jbState.asAlias + '"\n'
-    + '    }\n'
-    + '  }\n'
-    + '])';
-
-  var joinKeyword = { inner:'INNER JOIN', left:'LEFT JOIN', right:'RIGHT JOIN', full:'FULL OUTER JOIN' }[jbState.joinType] || 'LEFT JOIN';
-  var sqlCode = 'SELECT\n'
-    + '  a.*,\n'
-    + '  b.*\n'
-    + 'FROM ' + jbState.join1 + ' a\n'
-    + joinKeyword + ' ' + jbState.join2 + ' b\n'
-    + '  ON a.' + jbState.sqlOn1 + ' = b.' + jbState.sqlOn2;
-
-  // ── preset buttons ──
-  var presetHTML = JB_PRESETS.map(function(p, i) {
-    var active = (jbState.join1===p.join1 && jbState.join2===p.join2 && jbState.localField===p.local && jbState.foreignField===p.foreign);
-    return '<button onclick="applyJbPreset(' + i + ')" style="'
-      + 'padding:6px 11px;border-radius:20px;border:1px solid ' + (active?'#f97316':'#2a2a4a') + ';'
-      + 'background:' + (active?'#2a1200':'#0d0d1a') + ';'
-      + 'color:' + (active?'#f97316':'#888') + ';'
-      + 'font-size:12px;font-family:var(--font-ui);cursor:pointer;white-space:nowrap;transition:all .15s">'
+  // preset buttons
+  var presetHTML = JB_MULTI_PRESETS.map(function(p, i) {
+    var isActive = jbState.base === p.base
+      && jbState.steps.length === p.steps.length
+      && jbState.steps.every(function(s,j){ return s.coll===p.steps[j].coll; });
+    return '<button onclick="jbApplyPreset('+i+')" style="padding:6px 12px;border-radius:20px;border:1px solid '
+      +(isActive?'#f97316':'#2a2a4a')+';background:'+(isActive?'#2a1200':'#0d0d1a')
+      +';color:'+(isActive?'#f97316':'#888')
+      +';font-size:12px;font-family:var(--font-ui);cursor:pointer;white-space:nowrap;transition:all .15s" title="'+p.desc+'">'
       + p.label + '</button>';
   }).join('');
 
-  // ── field selects ──
-  function fieldOpts(fields, selected) {
-    return fields.map(function(f){ return '<option value="'+f+'"'+(f===selected?' selected':'')+'>'+f+'</option>'; }).join('');
-  }
-  function collOpts(selected) {
-    return colls.map(function(c){ return '<option value="'+c+'"'+(c===selected?' selected':'')+'>'+c+'</option>'; }).join('');
-  }
+  // step cards
+  var stepsHTML = jbState.steps.map(function(s, i) {
+    var col = colors[(i+1) % colors.length];
+    var prevColl = i === 0 ? jbState.base : jbState.steps[i-1].coll;
+    var prevFields = getJbFields(prevColl);
+    return [
+      // connector arrow
+      '<div style="display:flex;align-items:center;gap:8px;margin:6px 0 6px 16px">',
+        '<div style="width:2px;height:18px;background:linear-gradient(to bottom,'+colors[i%colors.length]+','+col+')"></div>',
+        '<span style="font-size:10px;color:#555;font-family:var(--font-ui)">$lookup</span>',
+      '</div>',
+      // step card
+      '<div style="background:#0a0a18;border:1px solid '+col+'44;border-left:3px solid '+col+';border-radius:8px;padding:10px 12px;position:relative">',
+        // step header
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">',
+          '<span style="width:20px;height:20px;border-radius:50%;background:'+col+'22;border:1px solid '+col+';color:'+col+';font-size:11px;font-family:var(--font-ui);font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(i+1)+'</span>',
+          '<span style="color:'+col+';font-size:12px;font-weight:600;font-family:var(--font-ui)">JOIN #'+(i+1)+'</span>',
+          '<button onclick="jbRemoveStep('+i+')" style="margin-left:auto;background:transparent;border:1px solid #3a1a1a;border-radius:4px;color:#e24b4a;font-size:11px;padding:2px 8px;cursor:pointer;font-family:var(--font-ui)">✕ Remove</button>',
+        '</div>',
+
+        // collection selector
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">',
+          '<div>',
+            '<div style="font-size:10px;color:#666;margin-bottom:3px;font-family:var(--font-ui)">Collection (from)</div>',
+            '<select onchange="jbUpdateStep('+i+',\'coll\',this.value)" style="width:100%;background:#060610;border:1px solid #2a2a4a;border-radius:4px;padding:5px 7px;color:'+col+';font-size:12px;font-family:var(--font-ui)">'+jbCollOpts(s.coll)+'</select>',
+          '</div>',
+          '<div>',
+            '<div style="font-size:10px;color:#666;margin-bottom:3px;font-family:var(--font-ui)">as (alias)</div>',
+            '<input value="'+s.as+'" onchange="jbUpdateStep('+i+',\'as\',this.value)" style="width:100%;background:#060610;border:1px solid #2a2a4a;border-radius:4px;padding:5px 7px;color:#dcdcaa;font-size:12px;font-family:var(--font-code)">',
+          '</div>',
+        '</div>',
+
+        // join key
+        '<div style="background:#060610;border:1px dashed #2a2a4a;border-radius:6px;padding:8px;margin-bottom:8px">',
+          '<div style="font-size:10px;color:#666;margin-bottom:5px;font-family:var(--font-ui)">🔑 Join Key</div>',
+          '<div style="display:grid;grid-template-columns:auto auto auto;gap:6px;align-items:center">',
+            // localField from base (always from base collection for simplicity)
+            '<div>',
+              '<div style="font-size:9px;color:#555;margin-bottom:2px;font-family:var(--font-ui)">'+jbState.base+'.field</div>',
+              '<select onchange="jbUpdateStep('+i+',\'localField\',this.value)" style="width:100%;background:#0a0a18;border:1px solid #2a2a4a;border-radius:4px;padding:4px 6px;color:#4da6ff;font-size:11px;font-family:var(--font-ui)">'+jbFieldOpts(jbState.base, s.localField)+'</select>',
+            '</div>',
+            '<span style="color:#f97316;font-size:14px;text-align:center">=</span>',
+            '<div>',
+              '<div style="font-size:9px;color:#555;margin-bottom:2px;font-family:var(--font-ui)">'+s.coll+'.field</div>',
+              '<select onchange="jbUpdateStep('+i+',\'foreignField\',this.value)" style="width:100%;background:#0a0a18;border:1px solid #2a2a4a;border-radius:4px;padding:4px 6px;color:'+col+';font-size:11px;font-family:var(--font-ui)">'+jbFieldOpts(s.coll, s.foreignField)+'</select>',
+            '</div>',
+          '</div>',
+        '</div>',
+
+        // join type
+        '<div>',
+          '<div style="font-size:10px;color:#666;margin-bottom:3px;font-family:var(--font-ui)">SQL Join Type</div>',
+          '<select onchange="jbUpdateStep('+i+',\'joinType\',this.value)" style="background:#060610;border:1px solid #2a2a4a;border-radius:4px;padding:4px 7px;color:#e0e0e0;font-size:12px;font-family:var(--font-ui)">',
+            '<option value="left"'+(s.joinType==='left'?' selected':'')+'>LEFT JOIN</option>',
+            '<option value="inner"'+(s.joinType==='inner'?' selected':'')+'>INNER JOIN</option>',
+            '<option value="right"'+(s.joinType==='right'?' selected':'')+'>RIGHT JOIN</option>',
+            '<option value="full"'+(s.joinType==='full'?' selected':'')+'>FULL OUTER JOIN</option>',
+          '</select>',
+        '</div>',
+
+      '</div>',
+    ].join('');
+  }).join('');
+
+  // code preview
+  var mCode = jbMongoCode();
+  var sCode = jbSqlCode();
+  var isMongoCode = jbState._codeTab !== 'sql';
+  var codeDisplay = isMongoCode ? mCode : sCode;
 
   root.innerHTML = [
-    // ── Top toolbar ──
+    // ── header bar ──
     '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px 0;flex-wrap:wrap;flex-shrink:0">',
-      '<span style="color:#f97316;font-size:15px;font-weight:700">🔗 Join Builder</span>',
-      '<span style="color:#555;font-size:13px">จำลอง $lookup (MongoDB) และ JOIN (SQL)</span>',
-      '<div style="margin-left:auto;display:flex;gap:6px">',
-        '<button onclick="runJoinBuilder()" style="padding:7px 14px;background:#f97316;border:none;border-radius:6px;color:#000;font-weight:600;font-size:13px;cursor:pointer;font-family:var(--font-ui)">▶ Run Join</button>',
+      '<span style="color:#f97316;font-size:15px;font-weight:700">🔗 Multi-Join Builder</span>',
+      '<span style="color:#555;font-size:13px">เพิ่ม JOIN ได้ไม่จำกัด — MongoDB $lookup + SQL</span>',
+      '<div style="margin-left:auto;display:flex;gap:8px">',
+        '<button onclick="jbAddStep()" style="padding:7px 14px;background:#1e2a4a;border:1px solid #4da6ff;border-radius:6px;color:#4da6ff;font-weight:600;font-size:13px;cursor:pointer;font-family:var(--font-ui)">＋ Add JOIN</button>',
+        '<button onclick="runJoinBuilder()" style="padding:7px 16px;background:#f97316;border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font-ui)">▶ Run</button>',
       '</div>',
     '</div>',
 
-    // ── Presets ──
-    '<div style="padding:10px 14px 0;flex-shrink:0">',
-      '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">⚡ Preset — กดเพื่อโหลด</div>',
+    // ── presets ──
+    '<div style="padding:8px 14px 0;flex-shrink:0">',
+      '<div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">⚡ Preset</div>',
       '<div style="display:flex;flex-wrap:wrap;gap:6px">' + presetHTML + '</div>',
     '</div>',
 
-    // ── Builder body ──
-    '<div style="display:flex;gap:0;flex:1;overflow:hidden;padding:10px 14px;gap:12px">',
+    // ── body: left panel + right results ──
+    '<div style="display:flex;flex:1;overflow:hidden;padding:10px 14px;gap:14px;min-height:0;height:0">',
 
-      // Left: Config panel
-      '<div style="width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;overflow-y:auto">',
+      // ── left: join pipeline config ──
+      '<div style="width:340px;flex-shrink:0;display:flex;flex-direction:column;gap:0;overflow-y:auto;padding-right:4px">',
 
-        // Collection boxes
-        '<div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:12px">',
-          '<div style="font-size:11px;color:#f97316;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;font-weight:600">📦 Collections</div>',
-
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">',
-            '<div>',
-              '<div style="font-size:11px;color:#888;margin-bottom:4px">Left (from)</div>',
-              '<select onchange="jbState.join1=this.value;jbState.localField=getJbFields(this.value)[0]||\'_id\';renderJoinBuilder()" style="width:100%;background:#060610;border:1px solid #3a3a6a;border-radius:5px;padding:6px 8px;color:#e0e0e0;font-size:13px;font-family:var(--font-ui)">' + collOpts(jbState.join1) + '</select>',
-            '</div>',
-            '<div>',
-              '<div style="font-size:11px;color:#888;margin-bottom:4px">Right (join)</div>',
-              '<select onchange="jbState.join2=this.value;jbState.foreignField=getJbFields(this.value)[0]||\'_id\';renderJoinBuilder()" style="width:100%;background:#060610;border:1px solid #3a3a6a;border-radius:5px;padding:6px 8px;color:#e0e0e0;font-size:13px;font-family:var(--font-ui)">' + collOpts(jbState.join2) + '</select>',
-            '</div>',
+        // base collection box
+        '<div style="background:#0a0a18;border:1px solid '+baseColor+'44;border-left:3px solid '+baseColor+';border-radius:8px;padding:10px 12px">',
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">',
+            '<span style="width:20px;height:20px;border-radius:50%;background:'+baseColor+'22;border:1px solid '+baseColor+';color:'+baseColor+';font-size:11px;font-family:var(--font-ui);font-weight:700;display:flex;align-items:center;justify-content:center">A</span>',
+            '<span style="color:'+baseColor+';font-size:12px;font-weight:600;font-family:var(--font-ui)">Base Collection</span>',
           '</div>',
-
-          // Join key row
-          '<div style="margin-top:10px;background:#060610;border:1px dashed #3a3a6a;border-radius:6px;padding:10px">',
-            '<div style="font-size:11px;color:#888;margin-bottom:6px">🔑 Join Key</div>',
-            '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center">',
-              '<select onchange="jbState.localField=this.value;jbState.sqlOn1=this.value;renderJoinBuilder()" style="background:#0a0a18;border:1px solid #2a2a4a;border-radius:4px;padding:5px 7px;color:#4da6ff;font-size:12px;font-family:var(--font-ui)">' + fieldOpts(fields1, jbState.localField) + '</select>',
-              '<span style="color:#f97316;font-size:16px;text-align:center">=</span>',
-              '<select onchange="jbState.foreignField=this.value;jbState.sqlOn2=this.value;renderJoinBuilder()" style="background:#0a0a18;border:1px solid #2a2a4a;border-radius:4px;padding:5px 7px;color:#28c840;font-size:12px;font-family:var(--font-ui)">' + fieldOpts(fields2, jbState.foreignField) + '</select>',
-            '</div>',
-            '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:#444">',
-              '<span>' + jbState.join1 + '.' + jbState.localField + '</span>',
-              '<span>' + jbState.join2 + '.' + jbState.foreignField + '</span>',
-            '</div>',
-          '</div>',
-
-          // as alias + join type
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">',
-            '<div>',
-              '<div style="font-size:11px;color:#888;margin-bottom:4px">as (alias)</div>',
-              '<input value="' + jbState.asAlias + '" onchange="jbState.asAlias=this.value;renderJoinBuilder()" style="width:100%;background:#060610;border:1px solid #2a2a4a;border-radius:4px;padding:5px 8px;color:#dcdcaa;font-size:12px;font-family:var(--font-code)">',
-            '</div>',
-            '<div>',
-              '<div style="font-size:11px;color:#888;margin-bottom:4px">SQL Join Type</div>',
-              '<select onchange="jbState.joinType=this.value;renderJoinBuilder()" style="width:100%;background:#060610;border:1px solid #2a2a4a;border-radius:4px;padding:5px 8px;color:#e0e0e0;font-size:12px;font-family:var(--font-ui)">',
-                '<option value="left"'+(jbState.joinType==='left'?' selected':'')+'>LEFT JOIN</option>',
-                '<option value="inner"'+(jbState.joinType==='inner'?' selected':'')+'>INNER JOIN</option>',
-                '<option value="right"'+(jbState.joinType==='right'?' selected':'')+'>RIGHT JOIN</option>',
-                '<option value="full"'+(jbState.joinType==='full'?' selected':'')+'>FULL OUTER JOIN</option>',
-              '</select>',
-            '</div>',
-          '</div>',
+          '<select onchange="jbUpdateBase(this.value)" style="width:100%;background:#060610;border:1px solid #3a3a6a;border-radius:5px;padding:7px 9px;color:'+baseColor+';font-size:13px;font-family:var(--font-ui)">'+jbCollOpts(jbState.base)+'</select>',
         '</div>',
 
-        // Code preview
-        '<div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:12px">',
-          '<div style="display:flex;gap:8px;margin-bottom:8px">',
-            '<button onclick="jbState._codeTab=\'mongo\';renderJoinBuilder()" style="padding:4px 10px;border-radius:4px;border:1px solid '+(jbState._codeTab!=='sql'?'#f97316':'#2a2a4a')+';background:'+(jbState._codeTab!=='sql'?'#2a1200':'#060610')+';color:'+(jbState._codeTab!=='sql'?'#f97316':'#666')+';font-size:11px;cursor:pointer;font-family:var(--font-ui)">MongoDB $lookup</button>',
-            '<button onclick="jbState._codeTab=\'sql\';renderJoinBuilder()" style="padding:4px 10px;border-radius:4px;border:1px solid '+(jbState._codeTab==='sql'?'#4da6ff':'#2a2a4a')+';background:'+(jbState._codeTab==='sql'?'#0a1a3a':'#060610')+';color:'+(jbState._codeTab==='sql'?'#4da6ff':'#666')+';font-size:11px;cursor:pointer;font-family:var(--font-ui)">SQL Equivalent</button>',
+        // steps
+        stepsHTML,
+
+        // add button (bottom)
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;margin-left:16px">',
+          '<div style="width:2px;height:18px;background:#2a2a4a"></div>',
+          '<button onclick="jbAddStep()" style="padding:6px 14px;background:#0d0d1a;border:1px dashed #3a3a6a;border-radius:6px;color:#555;font-size:12px;cursor:pointer;font-family:var(--font-ui);transition:all .15s" onmouseover="this.style.borderColor=\'#4da6ff\';this.style.color=\'#4da6ff\'" onmouseout="this.style.borderColor=\'#3a3a6a\';this.style.color=\'#555\'">＋ Add another JOIN</button>',
+        '</div>',
+
+        // code preview
+        '<div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:12px;margin-top:12px">',
+          '<div style="display:flex;gap:6px;margin-bottom:8px">',
+            '<button onclick="jbState._codeTab=\'mongo\';renderJoinBuilder()" style="padding:4px 10px;border-radius:4px;border:1px solid '+(isMongoCode?'#f97316':'#2a2a4a')+';background:'+(isMongoCode?'#2a1200':'#060610')+';color:'+(isMongoCode?'#f97316':'#666')+';font-size:11px;cursor:pointer;font-family:var(--font-ui)">MongoDB</button>',
+            '<button onclick="jbState._codeTab=\'sql\';renderJoinBuilder()" style="padding:4px 10px;border-radius:4px;border:1px solid '+(!isMongoCode?'#4da6ff':'#2a2a4a')+';background:'+(!isMongoCode?'#0a1a3a':'#060610')+';color:'+(!isMongoCode?'#4da6ff':'#666')+';font-size:11px;cursor:pointer;font-family:var(--font-ui)">SQL</button>',
+            '<button onclick="navigator.clipboard.writeText(decodeURIComponent(\''+encodeURIComponent(codeDisplay)+'\')).then(function(){showNotif(\'Copied!\',\'success\')})" style="margin-left:auto;padding:4px 10px;border-radius:4px;border:1px solid #2a2a4a;background:#060610;color:#666;font-size:11px;cursor:pointer;font-family:var(--font-ui)">Copy</button>',
           '</div>',
-          '<div style="position:relative">',
-            '<pre style="background:#060610;border:1px solid #1a1a38;border-radius:6px;padding:10px;font-family:var(--font-code);font-size:12px;line-height:1.7;color:#e0e0e0;white-space:pre-wrap;margin:0;max-height:200px;overflow-y:auto">' + (jbState._codeTab==='sql' ? sqlCode : mongoCode) + '</pre>',
-            '<button onclick="navigator.clipboard.writeText(' + (jbState._codeTab==='sql' ? 'decodeURIComponent(\''+encodeURIComponent(sqlCode)+'\')' : 'decodeURIComponent(\''+encodeURIComponent(mongoCode)+'\')') + ').then(function(){showNotif(\'Copied!\',\'success\')})" style="position:absolute;top:6px;right:6px;background:#1e1e38;border:1px solid #2a2a4a;border-radius:4px;color:#888;font-size:10px;padding:2px 8px;cursor:pointer;font-family:var(--font-ui)">Copy</button>',
-          '</div>',
+          '<pre style="background:#060610;border:1px solid #1a1a38;border-radius:6px;padding:10px;font-family:var(--font-code);font-size:12px;line-height:1.7;color:#e0e0e0;white-space:pre-wrap;margin:0;max-height:220px;overflow-y:auto">'+codeDisplay+'</pre>',
         '</div>',
 
       '</div>',
 
-      // Right: Results
-      '<div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden">',
-        '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.07em;flex-shrink:0">📊 ผลลัพธ์ — กด Run Join เพื่อดูข้อมูล</div>',
+      // ── right: results ──
+      '<div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden;min-width:0">',
+        '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.07em;flex-shrink:0">📊 ผลลัพธ์</div>',
         '<div id="jb-results" style="flex:1;overflow:auto;background:#0d0d1a;border:1px solid #1e1e38;border-radius:8px;padding:12px">',
-          '<div style="color:#333;font-size:13px;font-family:var(--font-ui);padding:20px;text-align:center">กด <b style=\'color:#f97316\'>▶ Run Join</b> เพื่อดูผลลัพธ์</div>',
+          '<div style="color:#333;font-size:13px;font-family:var(--font-ui);padding:30px;text-align:center">กด <b style="color:#f97316">▶ Run</b> เพื่อดูผลลัพธ์</div>',
         '</div>',
       '</div>',
 
@@ -2654,204 +2927,230 @@ function renderJoinBuilder() {
   ].join('');
 }
 
-function applyJbPreset(i) {
-  var p = JB_PRESETS[i];
-  jbState.join1 = p.join1;
-  jbState.join2 = p.join2;
-  jbState.localField = p.local;
-  jbState.foreignField = p.foreign;
-  jbState.asAlias = p.as;
-  jbState.sqlOn1 = p.sqlOn1;
-  jbState.sqlOn2 = p.sqlOn2;
-  renderJoinBuilder();
-  setTimeout(function(){ runJoinBuilder(); }, 80);
-}
-
+// ── Execute multi-join ──
 function runJoinBuilder() {
-  var from = db['consentdb'][jbState.join1] || [];
-  var to   = db['consentdb'][jbState.join2] || [];
-  var lf   = jbState.localField;
-  var ff   = jbState.foreignField;
-  var as   = jbState.asAlias;
-  var jt   = jbState.joinType;
+  var base = db['consentdb'][jbState.base] || [];
 
-  // MongoDB $lookup — always left join semantics
-  var mongoResult = from.map(function(d) {
-    var r = Object.assign({}, d);
-    r[as] = to.filter(function(fd){ return fd[ff] === d[lf]; });
-    return r;
+  // MongoDB: chain $lookup — embed each joined collection as array field
+  var mongoResult = base.map(function(doc) { return Object.assign({}, doc); });
+  jbState.steps.forEach(function(s) {
+    var rightColl = db['consentdb'][s.coll] || [];
+    mongoResult = mongoResult.map(function(doc) {
+      var r = Object.assign({}, doc);
+      r[s.as] = rightColl.filter(function(rd){ return rd[s.foreignField] === doc[s.localField]; });
+      return r;
+    });
   });
 
-  // SQL join simulation
-  var sqlResult = [];
-  if (jt === 'inner') {
-    from.forEach(function(a){
-      to.forEach(function(b){
-        if (a[lf] === b[ff]) {
-          var row = {};
-          Object.keys(a).forEach(function(k){ row['a_'+k]=a[k]; });
-          Object.keys(b).forEach(function(k){ row['b_'+k]=b[k]; });
-          sqlResult.push(row);
+  // SQL: flatten join — build flat rows
+  var sqlResult = base.map(function(doc) {
+    var row = {};
+    Object.keys(doc).forEach(function(k){ row['a__'+k] = doc[k]; });
+    return row;
+  });
+
+  var aliases = ['a'];
+  jbState.steps.forEach(function(s, i) {
+    var prefix = String.fromCharCode(98 + i) + '__'; // b__, c__, d__...
+    aliases.push(prefix.replace('__',''));
+    var rightColl = db['consentdb'][s.coll] || [];
+    var jt = s.joinType;
+    var newRows = [];
+
+    if (jt === 'inner') {
+      sqlResult.forEach(function(row) {
+        var lval = row['a__' + s.localField];
+        var matches = rightColl.filter(function(rd){ return rd[s.foreignField] === lval; });
+        matches.forEach(function(rd) {
+          var nr = Object.assign({}, row);
+          Object.keys(rd).forEach(function(k){ nr[prefix+k] = rd[k]; });
+          newRows.push(nr);
+        });
+      });
+    } else if (jt === 'left') {
+      sqlResult.forEach(function(row) {
+        var lval = row['a__' + s.localField];
+        var matches = rightColl.filter(function(rd){ return rd[s.foreignField] === lval; });
+        if (matches.length) {
+          matches.forEach(function(rd) {
+            var nr = Object.assign({}, row);
+            Object.keys(rd).forEach(function(k){ nr[prefix+k] = rd[k]; });
+            newRows.push(nr);
+          });
+        } else {
+          var nr = Object.assign({}, row);
+          if (rightColl.length) Object.keys(rightColl[0]).forEach(function(k){ nr[prefix+k] = null; });
+          newRows.push(nr);
         }
       });
-    });
-  } else if (jt === 'left') {
-    from.forEach(function(a){
-      var matches = to.filter(function(b){ return a[lf]===b[ff]; });
-      if (matches.length) {
-        matches.forEach(function(b){
-          var row = {};
-          Object.keys(a).forEach(function(k){ row['a_'+k]=a[k]; });
-          Object.keys(b).forEach(function(k){ row['b_'+k]=b[k]; });
-          sqlResult.push(row);
-        });
-      } else {
-        var row = {};
-        Object.keys(a).forEach(function(k){ row['a_'+k]=a[k]; });
-        to.length && Object.keys(to[0]).forEach(function(k){ row['b_'+k]=null; });
-        sqlResult.push(row);
-      }
-    });
-  } else if (jt === 'right') {
-    to.forEach(function(b){
-      var matches = from.filter(function(a){ return a[lf]===b[ff]; });
-      if (matches.length) {
-        matches.forEach(function(a){
-          var row = {};
-          Object.keys(a).forEach(function(k){ row['a_'+k]=a[k]; });
-          Object.keys(b).forEach(function(k){ row['b_'+k]=b[k]; });
-          sqlResult.push(row);
-        });
-      } else {
-        var row = {};
-        from.length && Object.keys(from[0]).forEach(function(k){ row['a_'+k]=null; });
-        Object.keys(b).forEach(function(k){ row['b_'+k]=b[k]; });
-        sqlResult.push(row);
-      }
-    });
-  } else { // full
-    // left join
-    from.forEach(function(a){
-      var matches = to.filter(function(b){ return a[lf]===b[ff]; });
-      if (matches.length) {
-        matches.forEach(function(b){
-          var row = {};
-          Object.keys(a).forEach(function(k){ row['a_'+k]=a[k]; });
-          Object.keys(b).forEach(function(k){ row['b_'+k]=b[k]; });
-          sqlResult.push(row);
-        });
-      } else {
-        var row = {};
-        Object.keys(a).forEach(function(k){ row['a_'+k]=a[k]; });
-        to.length && Object.keys(to[0]).forEach(function(k){ row['b_'+k]=null; });
-        sqlResult.push(row);
-      }
-    });
-    // add right-only rows
-    to.forEach(function(b){
-      var hasMatch = from.some(function(a){ return a[lf]===b[ff]; });
-      if (!hasMatch) {
-        var row = {};
-        from.length && Object.keys(from[0]).forEach(function(k){ row['a_'+k]=null; });
-        Object.keys(b).forEach(function(k){ row['b_'+k]=b[k]; });
-        sqlResult.push(row);
-      }
-    });
-  }
-
-  // render both views
-  var el = document.getElementById('jb-results');
-  if (!el) return;
-
-  // Tab switcher inside results
-  var activeTab = jbState._resTab || 'mongo';
-  var mongoBtn = '<button onclick="jbState._resTab=\'mongo\';renderJbResultTabs()" style="padding:5px 12px;border-radius:4px;border:1px solid '+(activeTab==='mongo'?'#f97316':'#2a2a4a')+';background:'+(activeTab==='mongo'?'#2a1200':'#060610')+';color:'+(activeTab==='mongo'?'#f97316':'#666')+';font-size:12px;cursor:pointer;font-family:var(--font-ui)">🍃 MongoDB $lookup ('+mongoResult.length+')</button>';
-  var sqlBtn   = '<button onclick="jbState._resTab=\'sql\';renderJbResultTabs()" style="padding:5px 12px;border-radius:4px;border:1px solid '+(activeTab==='sql'?'#4da6ff':'#2a2a4a')+';background:'+(activeTab==='sql'?'#0a1a3a':'#060610')+';color:'+(activeTab==='sql'?'#4da6ff':'#666')+';font-size:12px;cursor:pointer;font-family:var(--font-ui)">🗄️ SQL '+jt.toUpperCase()+' JOIN ('+sqlResult.length+')</button>';
+    } else if (jt === 'right') {
+      rightColl.forEach(function(rd) {
+        var rval = rd[s.foreignField];
+        var matches = sqlResult.filter(function(row){ return row['a__'+s.localField] === rval; });
+        if (matches.length) {
+          matches.forEach(function(row) {
+            var nr = Object.assign({}, row);
+            Object.keys(rd).forEach(function(k){ nr[prefix+k] = rd[k]; });
+            newRows.push(nr);
+          });
+        } else {
+          var nr = {};
+          Object.keys(sqlResult[0]||{}).forEach(function(k){ nr[k] = null; });
+          Object.keys(rd).forEach(function(k){ nr[prefix+k] = rd[k]; });
+          newRows.push(nr);
+        }
+      });
+    } else { // full
+      // left side
+      sqlResult.forEach(function(row) {
+        var lval = row['a__' + s.localField];
+        var matches = rightColl.filter(function(rd){ return rd[s.foreignField] === lval; });
+        if (matches.length) {
+          matches.forEach(function(rd) {
+            var nr = Object.assign({}, row);
+            Object.keys(rd).forEach(function(k){ nr[prefix+k] = rd[k]; });
+            newRows.push(nr);
+          });
+        } else {
+          var nr = Object.assign({}, row);
+          if (rightColl.length) Object.keys(rightColl[0]).forEach(function(k){ nr[prefix+k] = null; });
+          newRows.push(nr);
+        }
+      });
+      // right-only
+      rightColl.forEach(function(rd) {
+        var hasMatch = sqlResult.some(function(row){ return row['a__'+s.localField] === rd[s.foreignField]; });
+        if (!hasMatch) {
+          var nr = {};
+          Object.keys(sqlResult[0]||{}).forEach(function(k){ nr[k] = null; });
+          Object.keys(rd).forEach(function(k){ nr[prefix+k] = rd[k]; });
+          newRows.push(nr);
+        }
+      });
+    }
+    sqlResult = newRows;
+  });
 
   jbState._mongoResult = mongoResult;
   jbState._sqlResult   = sqlResult;
+  jbState._resTab      = 'mongo';
 
-  el.innerHTML = [
-    '<div style="display:flex;gap:8px;margin-bottom:10px;flex-shrink:0" id="jb-res-tabs">' + mongoBtn + sqlBtn + '</div>',
-    '<div id="jb-res-content"></div>',
-  ].join('');
-
-  renderJbResultTabs();
-  showNotif('Join สำเร็จ — ' + mongoResult.length + ' rows (MongoDB)', 'success');
+  renderJbResults();
+  showNotif('Join สำเร็จ — ' + mongoResult.length + ' docs (MongoDB)', 'success');
 }
 
-function renderJbResultTabs() {
+function renderJbResults() {
+  var el = document.getElementById('jb-results');
+  if (!el) return;
   var tab = jbState._resTab || 'mongo';
-  var tabBtns = document.getElementById('jb-res-tabs');
-  if (tabBtns) {
-    var btns = tabBtns.querySelectorAll('button');
-    btns[0].style.borderColor = tab==='mongo'?'#f97316':'#2a2a4a';
-    btns[0].style.background  = tab==='mongo'?'#2a1200':'#060610';
-    btns[0].style.color       = tab==='mongo'?'#f97316':'#666';
-    btns[1].style.borderColor = tab==='sql'?'#4da6ff':'#2a2a4a';
-    btns[1].style.background  = tab==='sql'?'#0a1a3a':'#060610';
-    btns[1].style.color       = tab==='sql'?'#4da6ff':'#666';
-  }
-  var content = document.getElementById('jb-res-content');
-  if (!content) return;
+  var colors = JB_COLORS;
 
-  var data = tab==='mongo' ? jbState._mongoResult : jbState._sqlResult;
-  if (!data || !data.length) { content.innerHTML='<div style="color:#444;font-family:var(--font-ui);padding:20px;text-align:center">ไม่มีผลลัพธ์</div>'; return; }
+  // tab buttons
+  var tabs = [
+    { key:'mongo', label:'🍃 MongoDB ('+((jbState._mongoResult||[]).length)+' docs)', color:'#f97316', bg:'#2a1200' },
+    { key:'sql',   label:'🗄️ SQL flat ('+((jbState._sqlResult||[]).length)+' rows)',  color:'#4da6ff', bg:'#0a1a3a' },
+  ];
+  var tabBtns = tabs.map(function(t){
+    var active = tab === t.key;
+    return '<button onclick="jbState._resTab=\''+t.key+'\';renderJbResults()" style="padding:5px 13px;border-radius:5px;border:1px solid '+(active?t.color:'#2a2a4a')+';background:'+(active?t.bg:'#060610')+';color:'+(active?t.color:'#666')+';font-size:12px;cursor:pointer;font-family:var(--font-ui)">'+t.label+'</button>';
+  }).join('');
+
+  var bodyHTML = '';
 
   if (tab === 'mongo') {
-    // Card view — แสดง top-level fields + array badge สำหรับ joined field
-    var as = jbState.asAlias;
-    var cards = data.slice(0,20).map(function(doc) {
-      var joined = doc[as] || [];
-      var mainFields = Object.keys(doc).filter(function(k){ return k!==as; });
-      var fieldRows = mainFields.slice(0,6).map(function(k){
-        var v = doc[k];
-        var display = v===null?'<span style="color:#444">null</span>': typeof v==='boolean'?'<span style="color:#569cd6">'+v+'</span>': typeof v==='number'?'<span style="color:#b5cea8">'+v+'</span>': '<span style="color:#ce9178">"'+String(v).slice(0,40)+'"</span>';
-        return '<div style="display:flex;gap:6px;font-size:12px;padding:2px 0"><span style="color:#9cdcfe;flex-shrink:0">'+k+':</span><span>'+display+'</span></div>';
+    var data = jbState._mongoResult || [];
+    if (!data.length) { bodyHTML = '<div style="color:#444;padding:20px;text-align:center;font-family:var(--font-ui)">ไม่มีผลลัพธ์</div>'; }
+    else {
+      var joinedKeys = jbState.steps.map(function(s){ return s.as; });
+      var cards = data.slice(0, 20).map(function(doc, di) {
+        var mainFields = Object.keys(doc).filter(function(k){ return joinedKeys.indexOf(k) === -1; });
+        var fieldRows = mainFields.slice(0, 6).map(function(k){
+          var v = doc[k];
+          var cls = v===null?'#444': typeof v==='boolean'?'#569cd6': typeof v==='number'?'#b5cea8':'#ce9178';
+          var display = v===null?'null': typeof v==='object'?JSON.stringify(v).slice(0,40): '"'+String(v).slice(0,50)+'"';
+          return '<div style="display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px;padding:1px 0"><span style="color:#9cdcfe;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+k+'</span><span style="color:'+cls+'">'+display+'</span></div>';
+        }).join('');
+
+        var joinSections = jbState.steps.map(function(s, si) {
+          var col = colors[(si+1) % colors.length];
+          var arr = doc[s.as] || [];
+          var preview = arr.length === 0
+            ? '<span style="color:#444;font-size:12px">— ไม่มีข้อมูล match</span>'
+            : arr.slice(0,1).map(function(jd){
+                return Object.entries(jd).slice(0,4).map(function(e){
+                  return '<span style="color:#9cdcfe">'+e[0]+'</span>: <span style="color:#ce9178">"'+String(e[1]).slice(0,25)+'"</span>';
+                }).join(' · ');
+              }).join('') + (arr.length > 1 ? ' <span style="color:#444">+' + (arr.length-1) + ' more</span>' : '');
+          return '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #1a1a2e">'
+            + '<div style="font-size:10px;color:'+col+';margin-bottom:3px;font-family:var(--font-ui)">🔗 '+s.as+' ('+arr.length+' doc'+(arr.length!==1?'s':'')+')</div>'
+            + '<div style="font-size:11px;color:#aaa;background:#060610;border-radius:4px;padding:4px 8px">'+preview+'</div>'
+            + '</div>';
+        }).join('');
+
+        return '<div style="background:#0a0a18;border:1px solid #1e2a3a;border-radius:8px;padding:10px 12px;margin-bottom:8px">'
+          + '<div style="font-size:10px;color:'+colors[0]+';margin-bottom:6px;font-family:var(--font-ui)">📄 '+jbState.base+' · '+(doc._id||'doc #'+di)+'</div>'
+          + fieldRows
+          + joinSections
+          + '</div>';
       }).join('');
-      var joinedInfo = joined.length===0
-        ? '<div style="color:#444;font-size:12px;padding:4px 0">ไม่พบข้อมูลที่ match</div>'
-        : joined.slice(0,2).map(function(jd){
-            return '<div style="font-size:11px;color:#aaa;background:#060610;border-radius:4px;padding:4px 8px;margin-bottom:4px">'
-              + Object.entries(jd).slice(0,4).map(function(e){
-                  return '<span style="color:#9cdcfe">'+e[0]+'</span>: <span style="color:#ce9178">"'+String(e[1]).slice(0,30)+'"</span>';
-                }).join(' · ')
-              + '</div>';
-          }).join('') + (joined.length>2?'<div style="color:#444;font-size:11px">...+ '+(joined.length-2)+' more</div>':'');
-      return '<div style="background:#0a0a18;border:1px solid #1e2a3a;border-radius:8px;padding:10px 12px;margin-bottom:8px">'
-        + '<div style="font-size:11px;color:#f97316;margin-bottom:6px;font-family:var(--font-ui)">📄 ' + (doc._id||'doc') + '</div>'
-        + '<div style="margin-bottom:8px">' + fieldRows + '</div>'
-        + '<div style="border-top:1px solid #1e2a3a;padding-top:8px">'
-          + '<div style="font-size:11px;color:#28c840;margin-bottom:4px;font-family:var(--font-ui)">🔗 ' + as + ' ('+joined.length+' doc'+(joined.length!==1?'s':'')+')</div>'
-          + joinedInfo
+
+      bodyHTML = '<div style="font-size:12px;color:#555;font-family:var(--font-ui);margin-bottom:8px">'
+        + 'แสดง '+Math.min(data.length,20)+'/'+data.length+' docs · '
+        + jbState.steps.length+' $lookup stage'+(jbState.steps.length!==1?'s':'')
         + '</div>'
-        + '</div>';
-    }).join('');
-    content.innerHTML = '<div style="font-size:12px;color:#555;font-family:var(--font-ui);margin-bottom:8px">แสดง ' + Math.min(data.length,20) + '/' + data.length + ' rows — joined field อยู่ในอาเรย์ <span style="color:#dcdcaa">"'+as+'"</span></div>'
-      + '<div style="overflow-y:auto;max-height:calc(100vh - 360px)">' + cards + '</div>';
+        + '<div>' + cards + '</div>';
+    }
   } else {
-    // Table view สำหรับ SQL
-    if (!data.length) { content.innerHTML='<div style="color:#444">ไม่มี match</div>'; return; }
-    var keys = Object.keys(data[0]);
-    var aKeys = keys.filter(function(k){ return k.startsWith('a_'); });
-    var bKeys = keys.filter(function(k){ return k.startsWith('b_'); });
-    var thead = '<thead><tr>'
-      + '<th colspan="'+aKeys.length+'" style="text-align:center;background:#0a1a2a;color:#4da6ff;padding:6px;font-size:11px;border-bottom:1px solid #2a2a4a;border-right:2px solid #4da6ff44">'+jbState.join1+'</th>'
-      + '<th colspan="'+bKeys.length+'" style="text-align:center;background:#0a2a0a;color:#28c840;padding:6px;font-size:11px;border-bottom:1px solid #2a2a4a">'+jbState.join2+'</th>'
-      + '</tr><tr>'
-      + aKeys.map(function(k){ return '<th style="padding:5px 8px;color:#4da6ff;font-size:10px;border-bottom:1px solid #2a2a4a;border-right:1px solid #1a1a38;white-space:nowrap">'+k.slice(2)+'</th>'; }).join('')
-      + bKeys.map(function(k){ return '<th style="padding:5px 8px;color:#28c840;font-size:10px;border-bottom:1px solid #2a2a4a;white-space:nowrap">'+k.slice(2)+'</th>'; }).join('')
-      + '</tr></thead>';
-    var tbody = '<tbody>' + data.slice(0,30).map(function(row){
-      return '<tr>'
-        + aKeys.map(function(k){ var v=row[k]; return '<td style="padding:5px 8px;font-size:12px;border-bottom:1px solid #151525;border-right:1px solid #1a1a38;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(v===null?'#444':'#ce9178')+'">'+(v===null?'NULL':'"'+String(v).slice(0,40)+'"')+'</td>'; }).join('')
-        + bKeys.map(function(k){ var v=row[k]; return '<td style="padding:5px 8px;font-size:12px;border-bottom:1px solid #151525;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(v===null?'#444':'#ce9178')+'">'+(v===null?'NULL':'"'+String(v).slice(0,40)+'"')+'</td>'; }).join('')
-        + '</tr>';
-    }).join('') + '</tbody>';
-    content.innerHTML = '<div style="font-size:12px;color:#555;font-family:var(--font-ui);margin-bottom:8px">แสดง '+Math.min(data.length,30)+'/'+data.length+' rows — <span style="color:#4da6ff">สีฟ้า</span>='+jbState.join1+' · <span style="color:#28c840">สีเขียว</span>='+jbState.join2+'</div>'
-      + '<div style="overflow:auto;max-height:calc(100vh - 360px)"><table style="width:100%;border-collapse:collapse">'+thead+tbody+'</table></div>';
+    // SQL flat table
+    var data = jbState._sqlResult || [];
+    if (!data.length) { bodyHTML = '<div style="color:#444;padding:20px;text-align:center;font-family:var(--font-ui)">ไม่มีผลลัพธ์</div>'; }
+    else {
+      var allKeys = Object.keys(data[0]);
+      // group keys by prefix a__, b__, c__...
+      var prefixGroups = [];
+      var prefixOrder  = [];
+      allKeys.forEach(function(k){
+        var pre = k.split('__')[0];
+        if (prefixOrder.indexOf(pre) === -1) { prefixOrder.push(pre); prefixGroups[pre] = []; }
+        prefixGroups[pre].push(k);
+      });
+      var collNames = [jbState.base].concat(jbState.steps.map(function(s){ return s.coll; }));
+
+      var theadRow1 = prefixOrder.map(function(pre, pi){
+        var col = colors[pi % colors.length];
+        var span = prefixGroups[pre].length;
+        var name = collNames[pi] || pre;
+        return '<th colspan="'+span+'" style="text-align:center;background:'+col+'11;color:'+col+';padding:5px 8px;font-size:11px;border-bottom:1px solid #2a2a4a;border-right:2px solid '+col+'33;font-family:var(--font-ui)">'+name+'</th>';
+      }).join('');
+      var theadRow2 = prefixOrder.map(function(pre, pi){
+        var col = colors[pi % colors.length];
+        return prefixGroups[pre].map(function(k, ki){
+          var fname = k.split('__')[1];
+          return '<th style="padding:4px 7px;color:'+col+';font-size:10px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-family:var(--font-ui);'+(ki===prefixGroups[pre].length-1?'border-right:2px solid '+col+'33':'')+'">' + fname + '</th>';
+        }).join('');
+      }).join('');
+
+      var tbody = data.slice(0, 30).map(function(row){
+        return '<tr>' + prefixOrder.map(function(pre, pi){
+          return prefixGroups[pre].map(function(k, ki){
+            var v = row[k];
+            var isNull = v === null || v === undefined;
+            return '<td style="padding:4px 8px;font-size:12px;border-bottom:1px solid #151525;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(isNull?'#333':'#ce9178')+';'+(ki===prefixGroups[pre].length-1?'border-right:1px solid #1e1e38':'')+'">'+(isNull?'<span style="color:#2a2a3a">NULL</span>':'"'+String(v).slice(0,40)+'"')+'</td>';
+          }).join('');
+        }).join('') + '</tr>';
+      }).join('');
+
+      bodyHTML = '<div style="font-size:12px;color:#555;font-family:var(--font-ui);margin-bottom:8px">'
+        + 'แสดง '+Math.min(data.length,30)+'/'+data.length+' rows · '+jbState.steps.length+' JOIN'
+        + '</div>'
+        + '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr>'+theadRow1+'</tr><tr>'+theadRow2+'</tr></thead><tbody>'+tbody+'</tbody></table></div>';
+    }
   }
+
+  el.innerHTML = '<div style="display:flex;gap:8px;margin-bottom:10px">'+tabBtns+'</div>' + bodyHTML;
 }
+
+function renderJbResultTabs() { renderJbResults(); } // backward compat
 // END JOIN BUILDER
 
 </script>
