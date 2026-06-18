@@ -292,6 +292,8 @@ td{font-size:13px;padding:9px 13px;max-width:240px;}
           <div class="tab" onclick="switchTab('design',this)" style="color:#f472b6">&#9670; Schema Design</div>
           <div class="tab" onclick="switchTab('transaction',this)" style="color:#34d399">&#9670; Transaction</div>
           <div class="tab" onclick="switchTab('errors',this)" style="color:#f87171">&#9670; Error Codes</div>
+          <div class="tab" onclick="switchTab('whymongo',this)">&#9670; MongoDB คืออะไร</div>
+          <div class="tab" onclick="switchTab('pricing',this)" style="color:#28c840">&#9670; 💰 Pricing</div>
         </div>
 
         <!-- Documents -->
@@ -847,6 +849,401 @@ td{font-size:13px;padding:9px 13px;max-width:240px;}
   <span style="color:#9cdcfe">validationAction</span>: <span style="color:#ce9178">"error"</span>  <span style="color:#555">// "error"=reject | "warn"=allow+log</span>
 })</div>
             <div style="background:#1e2a4a;border-left:3px solid #f87171;border-radius:0 6px 6px 0;padding:10px 14px;font-size:14px;color:#aaa;line-height:1.75"><span style="color:#f87171;font-weight:600">เมื่อ insert ไม่ผ่าน validator</span> จะได้ error code <code style="color:#f87171">121 DocumentValidationFailure</code> — ตั้ง validator ไว้ดักข้อมูลผิดพลาดตั้งแต่ต้น ดีกว่าแก้ทีหลัง</div>
+          </div>
+        </div>
+
+        <!-- MongoDB คืออะไร / ทำไมต้องใช้ -->
+        <div class="tab-content hidden" id="whymongo-tab" style="overflow-y:auto">
+          <div style="font-family:sans-serif">
+
+            <div style="margin-bottom:20px">
+              <div style="font-size:16px;font-weight:600;color:#e0e0e0;margin-bottom:4px">MongoDB คืออะไร และเมื่อไหร่ควรใช้</div>
+              <div style="font-size:14px;color:#666">ภาพรวมก่อนลงมือใช้งาน</div>
+            </div>
+
+            <!-- What is Mongo -->
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:16px 18px;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">MongoDB คืออะไร</div>
+              <div style="font-size:15px;color:#e0e0e0;line-height:1.85">
+                MongoDB เป็น <b>Document Database</b> ประเภท NoSQL — แทนที่จะเก็บข้อมูลในตารางแบบ SQL
+                MongoDB เก็บเป็น <b>JSON document</b> แต่ละชิ้น ซึ่งมีโครงสร้างอิสระจากกัน<br><br>
+                หนึ่ง <b>Document</b> ≈ หนึ่งแถวใน SQL แต่สามารถซ้อน object และ array ข้างในได้เลย
+                ไม่ต้อง JOIN ไปดึงตารางอื่น
+              </div>
+              <div style="margin-top:14px;background:#060610;border-radius:6px;padding:12px 14px;font-family:'Courier New',monospace;font-size:13px;line-height:1.9;color:#e0e0e0">
+{
+  <span style="color:#9cdcfe">"_id"</span>:         <span style="color:#ce9178">"con001"</span>,
+  <span style="color:#9cdcfe">"subjectName"</span>: <span style="color:#ce9178">"สมชาย ใจดี"</span>,
+  <span style="color:#9cdcfe">"status"</span>:      <span style="color:#ce9178">"granted"</span>,
+  <span style="color:#9cdcfe">"purpose"</span>: {                        <span style="color:#555">// ← object ซ้อนได้</span>
+    <span style="color:#9cdcfe">"name"</span>: <span style="color:#ce9178">"การตลาด"</span>,
+    <span style="color:#9cdcfe">"legal"</span>: <span style="color:#ce9178">"consent"</span>
+  },
+  <span style="color:#9cdcfe">"dataTypes"</span>: [<span style="color:#ce9178">"email"</span>, <span style="color:#ce9178">"name"</span>]  <span style="color:#555">// ← array ได้เลย</span>
+}
+              </div>
+            </div>
+
+            <!-- Key characteristics -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+              <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:14px 16px">
+                <div style="font-size:13px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">ลักษณะเด่น</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#ccc;line-height:1.6">
+                    <span style="color:#4da6ff;flex-shrink:0;margin-top:1px">◆</span>
+                    <span><b style="color:#e0e0e0">Schema ยืดหยุ่น</b> — เพิ่ม field ใหม่ได้ทันที ไม่ต้อง migrate ทั้งตาราง</span>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#ccc;line-height:1.6">
+                    <span style="color:#4da6ff;flex-shrink:0;margin-top:1px">◆</span>
+                    <span><b style="color:#e0e0e0">Document-based</b> — ข้อมูลที่เกี่ยวกันอยู่ใน document เดียว ไม่ต้อง JOIN</span>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#ccc;line-height:1.6">
+                    <span style="color:#4da6ff;flex-shrink:0;margin-top:1px">◆</span>
+                    <span><b style="color:#e0e0e0">Scale แนวนอน</b> — กระจาย server ได้ง่ายด้วย Sharding</span>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#ccc;line-height:1.6">
+                    <span style="color:#4da6ff;flex-shrink:0;margin-top:1px">◆</span>
+                    <span><b style="color:#e0e0e0">Query ทรงพลัง</b> — filter, sort, aggregate, text search ในที่เดียว</span>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#ccc;line-height:1.6">
+                    <span style="color:#4da6ff;flex-shrink:0;margin-top:1px">◆</span>
+                    <span><b style="color:#e0e0e0">เก็บข้อมูลเป็น BSON</b> — อ่านเร็ว รองรับ type พิเศษเช่น Date, ObjectId</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:14px 16px">
+                <div style="font-size:13px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">โครงสร้างหลัก</div>
+                <div style="display:flex;flex-direction:column;gap:6px;font-size:14px;color:#ccc;line-height:1.65">
+                  <div style="display:flex;align-items:baseline;gap:8px">
+                    <span style="font-family:'Courier New',monospace;color:#4da6ff;font-size:13px;flex-shrink:0">Database</span>
+                    <span style="color:#444">→</span>
+                    <span>เทียบได้กับ database ใน SQL</span>
+                  </div>
+                  <div style="display:flex;align-items:baseline;gap:8px;padding-left:14px">
+                    <span style="font-family:'Courier New',monospace;color:#4da6ff;font-size:13px;flex-shrink:0">Collection</span>
+                    <span style="color:#444">→</span>
+                    <span>เทียบได้กับ table ใน SQL</span>
+                  </div>
+                  <div style="display:flex;align-items:baseline;gap:8px;padding-left:28px">
+                    <span style="font-family:'Courier New',monospace;color:#4da6ff;font-size:13px;flex-shrink:0">Document</span>
+                    <span style="color:#444">→</span>
+                    <span>เทียบได้กับ row ใน SQL</span>
+                  </div>
+                  <div style="display:flex;align-items:baseline;gap:8px;padding-left:42px">
+                    <span style="font-family:'Courier New',monospace;color:#4da6ff;font-size:13px;flex-shrink:0">Field</span>
+                    <span style="color:#444">→</span>
+                    <span>เทียบได้กับ column ใน SQL</span>
+                  </div>
+                  <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e1e38;font-size:13px;color:#555">
+                    ตัวอย่างนี้: <span style="color:#4da6ff;font-family:'Courier New',monospace">consentdb</span> → <span style="color:#4da6ff;font-family:'Courier New',monospace">consents</span> → document แต่ละ consent
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- When to use -->
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:16px 18px;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">เมื่อไหร่ควรเลือก MongoDB</div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e2a4a;color:#4da6ff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif">✓ ใช้</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">โครงสร้างข้อมูลเปลี่ยนบ่อย</b> เช่น product catalog ที่สินค้าแต่ละประเภทมี attribute ต่างกัน หรือ consent ที่มี field เพิ่มตาม version</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e2a4a;color:#4da6ff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif">✓ ใช้</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">ข้อมูลที่ดึงมาใช้พร้อมกัน</b> เช่น consent + subject + purpose ควรอยู่ใน document เดียวเพื่อ read เร็ว</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e2a4a;color:#4da6ff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif">✓ ใช้</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">ข้อมูลปริมาณมากและต้องการ scale</b> เช่น log, event stream, IoT — Sharding กระจาย server ได้ง่าย</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e2a4a;color:#4da6ff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif">✓ ใช้</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">MVP / Prototype</b> — ไม่ต้องออกแบบ schema ล่วงหน้า เริ่ม dev ได้เลย ปรับ field ทีหลังได้</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e2a4a;color:#4da6ff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif">✓ ใช้</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">ข้อมูลที่มีโครงสร้างซ้อน</b> เช่น user profile ที่มี addresses[], preferences{}, history[] — เก็บได้ใน document เดียวโดยไม่ต้องแตก 4 ตาราง</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- When NOT to use -->
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:16px 18px;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">เมื่อไหร่ควรเลือก DB อื่น</div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e1e1e;color:#888;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif;border:1px solid #2a2a2a">✗ หลีกเลี่ยง</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">ธุรกรรมการเงิน</b> ที่ต้องการ ACID เต็มรูปแบบและ relation ซับซ้อน — ใช้ <span style="color:#aaa;font-family:'Courier New',monospace">PostgreSQL</span> แทน</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e1e1e;color:#888;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif;border:1px solid #2a2a2a">✗ หลีกเลี่ยง</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">ข้อมูลที่ต้อง JOIN เยอะมาก</b> ทุก query เช่น ERP, accounting — SQL เหมาะกว่ามาก</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e1e1e;color:#888;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif;border:1px solid #2a2a2a">✗ หลีกเลี่ยง</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">Full-text search ขั้นสูง</b> เช่นต้องการ NLP, fuzzy, ranking — ใช้ <span style="color:#aaa;font-family:'Courier New',monospace">Elasticsearch</span> แทน</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="background:#1e1e1e;color:#888;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:sans-serif;border:1px solid #2a2a2a">✗ หลีกเลี่ยง</span>
+                  <div style="font-size:14px;color:#ccc;line-height:1.7"><b style="color:#e0e0e0">Cache / Session</b> ที่ต้องการความเร็วสูงสุด — ใช้ <span style="color:#aaa;font-family:'Courier New',monospace">Redis</span> ที่อยู่ใน RAM แทน</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comparison table -->
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:16px 18px;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">เปรียบเทียบกับ SQL ในงานเดียวกัน</div>
+              <table style="width:100%;border-collapse:collapse;font-size:14px">
+                <thead>
+                  <tr style="border-bottom:1px solid #2a2a4a">
+                    <th style="text-align:left;padding:8px 12px;color:#666;font-size:12px;font-weight:500">สถานการณ์</th>
+                    <th style="text-align:left;padding:8px 12px;color:#666;font-size:12px;font-weight:500">SQL</th>
+                    <th style="text-align:left;padding:8px 12px;color:#666;font-size:12px;font-weight:500">MongoDB</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom:1px solid #151525">
+                    <td style="padding:9px 12px;color:#aaa">เพิ่ม field ใหม่</td>
+                    <td style="padding:9px 12px;color:#ccc">ALTER TABLE — กระทบทุก row</td>
+                    <td style="padding:9px 12px;color:#ccc">เพิ่มใน document ใหม่ได้เลย</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #151525">
+                    <td style="padding:9px 12px;color:#aaa">ดึง consent + subject</td>
+                    <td style="padding:9px 12px;color:#ccc">SELECT ... JOIN 3 tables</td>
+                    <td style="padding:9px 12px;color:#ccc">find() — document เดียวได้ครบ</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #151525">
+                    <td style="padding:9px 12px;color:#aaa">เพิ่ม server</td>
+                    <td style="padding:9px 12px;color:#ccc">ซับซ้อน ต้องอัพเกรดแนวตั้ง</td>
+                    <td style="padding:9px 12px;color:#ccc">Sharding — เพิ่ม node ได้เลย</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #151525">
+                    <td style="padding:9px 12px;color:#aaa">ข้อมูล consent version ต่างกัน</td>
+                    <td style="padding:9px 12px;color:#ccc">ต้องมี nullable column เต็มไปหมด</td>
+                    <td style="padding:9px 12px;color:#ccc">แต่ละ document มี field ต่างกันได้</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:9px 12px;color:#aaa">ธุรกรรมการเงิน</td>
+                    <td style="padding:9px 12px;color:#ccc">ACID เต็ม — เหมาะมาก</td>
+                    <td style="padding:9px 12px;color:#888">รองรับ แต่ SQL ยังเหมาะกว่า</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Bottom note -->
+            <div style="background:#0d0d1a;border:1px solid #2a2a4a;border-left:3px solid #4da6ff;border-radius:0 8px 8px 0;padding:12px 16px;font-size:14px;color:#aaa;line-height:1.8">
+              <b style="color:#e0e0e0">สรุป:</b> MongoDB ไม่ได้ดีกว่า SQL ในทุกด้าน — แต่เหมาะกว่าเมื่อข้อมูลมี <b style="color:#e0e0e0">โครงสร้างซับซ้อน เปลี่ยนบ่อย หรือปริมาณมาก</b>
+              ระบบจริงหลายแห่งใช้ทั้งคู่ร่วมกัน เช่น MongoDB เก็บ consent และ profile + PostgreSQL เก็บข้อมูลการเงิน
+            </div>
+
+
+          </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="tab-content hidden" id="pricing-tab" style="overflow-y:auto">
+          <div style="font-family:var(--font-ui)">
+
+            <!-- Header -->
+            <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <span style="color:#28c840;font-size:16px;font-weight:700">💰 MongoDB Atlas Pricing</span>
+              <span style="color:#555;font-size:13px">เปรียบเทียบครบทุก Tier — เลือกให้เหมาะกับงาน</span>
+              <span style="margin-left:auto;background:#0d2a0d;color:#28c840;border:1px solid #1a4a1a;border-radius:12px;font-size:11px;padding:3px 10px">อัปเดต 2026</span>
+            </div>
+
+            <!-- Quick Summary Cards -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:20px">
+              <div style="background:#0d1a0d;border:2px solid #28c84055;border-radius:10px;padding:14px;position:relative">
+                <div style="position:absolute;top:10px;right:10px;background:#0d2a0d;color:#28c840;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #1a4a1a">ฟรี</div>
+                <div style="font-size:22px;margin-bottom:6px">🆓</div>
+                <div style="color:#28c840;font-size:15px;font-weight:700;margin-bottom:4px">Free (M0)</div>
+                <div style="color:#3ada53;font-size:22px;font-weight:800;margin-bottom:6px">$0<span style="font-size:13px;color:#555">/เดือน</span></div>
+                <div style="font-size:12px;color:#888;line-height:1.8">💾 Storage 512 MB<br>🔗 Shared CPU &amp; RAM<br>🌍 1 Region เท่านั้น<br>✅ ฟรีตลอดชีพ ไม่หมดอายุ</div>
+              </div>
+              <div style="background:#0d1a2a;border:2px solid #4da6ff55;border-radius:10px;padding:14px;position:relative">
+                <div style="position:absolute;top:10px;right:10px;background:#0a1a3a;color:#4da6ff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #1a3a6a">Dev/Staging</div>
+                <div style="font-size:22px;margin-bottom:6px">⚡</div>
+                <div style="color:#4da6ff;font-size:15px;font-weight:700;margin-bottom:4px">Flex</div>
+                <div style="color:#6bb8ff;font-size:22px;font-weight:800;margin-bottom:6px">$8–30<span style="font-size:13px;color:#555">/เดือน</span></div>
+                <div style="font-size:12px;color:#888;line-height:1.8">💾 Storage สูงสุด 5 GB<br>⚡ Auto-scale ตาม ops/sec<br>🛡️ มี Backup ในตัว<br>🔒 ไม่มีค่า overage</div>
+              </div>
+              <div style="background:#1a1a0d;border:2px solid #ffbd2e55;border-radius:10px;padding:14px;position:relative">
+                <div style="position:absolute;top:10px;right:10px;background:#2a1a0d;color:#ffbd2e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #4a3a1a">Production</div>
+                <div style="font-size:22px;margin-bottom:6px">🏭</div>
+                <div style="color:#ffbd2e;font-size:15px;font-weight:700;margin-bottom:4px">Dedicated (M10+)</div>
+                <div style="color:#ffd060;font-size:22px;font-weight:800;margin-bottom:6px">$57+<span style="font-size:13px;color:#555">/เดือน</span></div>
+                <div style="font-size:12px;color:#888;line-height:1.8">💾 Storage 10 GB–4 TB<br>⚙️ CPU &amp; RAM แยกเฉพาะ<br>🌐 Multi-region รองรับ<br>📋 SLA 99.95% uptime</div>
+              </div>
+              <div style="background:#1a0d1a;border:2px solid #c084fc55;border-radius:10px;padding:14px;position:relative">
+                <div style="position:absolute;top:10px;right:10px;background:#2a0a2a;color:#c084fc;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #4a1a6a">Pay-as-you-go</div>
+                <div style="font-size:22px;margin-bottom:6px">☁️</div>
+                <div style="color:#c084fc;font-size:15px;font-weight:700;margin-bottom:4px">Serverless</div>
+                <div style="color:#d09eff;font-size:22px;font-weight:800;margin-bottom:6px">จ่ายตามใช้</div>
+                <div style="font-size:12px;color:#888;line-height:1.8">📖 Read: $0.10/1M ops<br>✏️ Write: $1.00/1M ops<br>💾 Storage 1 TB<br>⚠️ Write แพงกว่า Read 10×</div>
+              </div>
+            </div>
+
+            <!-- Feature comparison table -->
+            <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e1e38">📊 เปรียบเทียบฟีเจอร์ครบทุก Tier</div>
+            <div style="overflow-x:auto;margin-bottom:20px">
+              <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead>
+                  <tr style="background:#12121f">
+                    <th style="padding:10px 12px;text-align:left;color:#666;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a">ฟีเจอร์</th>
+                    <th style="padding:10px 12px;text-align:center;color:#28c840;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a;white-space:nowrap">🆓 Free</th>
+                    <th style="padding:10px 12px;text-align:center;color:#4da6ff;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a;white-space:nowrap">⚡ Flex</th>
+                    <th style="padding:10px 12px;text-align:center;color:#ffbd2e;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a;white-space:nowrap">🏭 Dedicated</th>
+                    <th style="padding:10px 12px;text-align:center;color:#c084fc;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a;white-space:nowrap">☁️ Serverless</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:9px 12px;color:#aaa;font-weight:600">ราคา/เดือน</td><td style="padding:9px 12px;text-align:center;color:#28c840;font-weight:700">$0</td><td style="padding:9px 12px;text-align:center;color:#4da6ff;font-weight:700">$8–$30</td><td style="padding:9px 12px;text-align:center;color:#ffbd2e;font-weight:700">$57–$23,947</td><td style="padding:9px 12px;text-align:center;color:#c084fc;font-weight:700">ตามใช้จริง</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:9px 12px;color:#aaa">Storage</td><td style="padding:9px 12px;text-align:center;color:#888">512 MB</td><td style="padding:9px 12px;text-align:center;color:#888">5 GB</td><td style="padding:9px 12px;text-align:center;color:#888">10 GB–4 TB</td><td style="padding:9px 12px;text-align:center;color:#888">1 TB</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:9px 12px;color:#aaa">CPU / RAM</td><td style="padding:9px 12px;text-align:center;color:#888">Shared</td><td style="padding:9px 12px;text-align:center;color:#888">Shared</td><td style="padding:9px 12px;text-align:center;color:#28c840">Dedicated ✅</td><td style="padding:9px 12px;text-align:center;color:#888">Auto-scale</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:9px 12px;color:#aaa">Automated Backup</td><td style="padding:9px 12px;text-align:center;color:#e24b4a">❌</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅ PITR</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:9px 12px;color:#aaa">Multi-region</td><td style="padding:9px 12px;text-align:center;color:#e24b4a">❌</td><td style="padding:9px 12px;text-align:center;color:#e24b4a">❌</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td><td style="padding:9px 12px;text-align:center;color:#e24b4a">❌</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:9px 12px;color:#aaa">SLA Uptime</td><td style="padding:9px 12px;text-align:center;color:#555">ไม่มี</td><td style="padding:9px 12px;text-align:center;color:#555">ไม่มี</td><td style="padding:9px 12px;text-align:center;color:#28c840">99.95% ✅</td><td style="padding:9px 12px;text-align:center;color:#888">~99.9%</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:9px 12px;color:#aaa">VPC Peering / Private Endpoint</td><td style="padding:9px 12px;text-align:center;color:#e24b4a">❌</td><td style="padding:9px 12px;text-align:center;color:#e24b4a">❌</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td><td style="padding:9px 12px;text-align:center;color:#e24b4a">❌</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:9px 12px;color:#aaa">Encryption at Rest</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td></tr>
+                  <tr><td style="padding:9px 12px;color:#aaa">Atlas Search / Vector Search</td><td style="padding:9px 12px;text-align:center;color:#888">จำกัด</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅ (add-on)</td><td style="padding:9px 12px;text-align:center;color:#28c840">✅</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Dedicated pricing table -->
+            <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e1e38">🏭 Dedicated Cluster — ราคาทุกขนาด</div>
+            <div style="overflow-x:auto;margin-bottom:20px">
+              <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead>
+                  <tr style="background:#12121f">
+                    <th style="padding:8px 12px;text-align:left;color:#666;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a">Tier</th>
+                    <th style="padding:8px 12px;text-align:right;color:#666;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a">ราคา/เดือน</th>
+                    <th style="padding:8px 12px;text-align:right;color:#666;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a">vCPUs</th>
+                    <th style="padding:8px 12px;text-align:right;color:#666;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a">RAM</th>
+                    <th style="padding:8px 12px;text-align:right;color:#666;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a">Storage</th>
+                    <th style="padding:8px 12px;text-align:left;color:#666;font-size:11px;font-weight:600;border-bottom:1px solid #2a2a4a">เหมาะกับ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom:1px solid #151525;background:#0d2a1a"><td style="padding:8px 12px;color:#28c840;font-weight:700">M10 ⭐</td><td style="padding:8px 12px;text-align:right;color:#3ada53;font-weight:600">$57.60</td><td style="padding:8px 12px;text-align:right;color:#888">2</td><td style="padding:8px 12px;text-align:right;color:#888">2 GB</td><td style="padding:8px 12px;text-align:right;color:#888">10 GB</td><td style="padding:8px 12px;color:#888;font-size:12px">Production ขนาดเล็ก</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:8px 12px;color:#4da6ff;font-weight:700">M20</td><td style="padding:8px 12px;text-align:right;color:#6bb8ff;font-weight:600">$144.00</td><td style="padding:8px 12px;text-align:right;color:#888">2</td><td style="padding:8px 12px;text-align:right;color:#888">4 GB</td><td style="padding:8px 12px;text-align:right;color:#888">20 GB</td><td style="padding:8px 12px;color:#888;font-size:12px">SMB ทั่วไป</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:8px 12px;color:#4da6ff;font-weight:700">M30 ⭐</td><td style="padding:8px 12px;text-align:right;color:#6bb8ff;font-weight:600">$388.80</td><td style="padding:8px 12px;text-align:right;color:#888">2</td><td style="padding:8px 12px;text-align:right;color:#888">8 GB</td><td style="padding:8px 12px;text-align:right;color:#888">40 GB</td><td style="padding:8px 12px;color:#888;font-size:12px">Business ขนาดกลาง</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:8px 12px;color:#ffbd2e;font-weight:700">M40</td><td style="padding:8px 12px;text-align:right;color:#ffd060;font-weight:600">$748.80</td><td style="padding:8px 12px;text-align:right;color:#888">4</td><td style="padding:8px 12px;text-align:right;color:#888">16 GB</td><td style="padding:8px 12px;text-align:right;color:#888">80 GB</td><td style="padding:8px 12px;color:#888;font-size:12px">Enterprise ขนาดกลาง</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:8px 12px;color:#ffbd2e;font-weight:700">M50</td><td style="padding:8px 12px;text-align:right;color:#ffd060;font-weight:600">$1,440</td><td style="padding:8px 12px;text-align:right;color:#888">8</td><td style="padding:8px 12px;text-align:right;color:#888">32 GB</td><td style="padding:8px 12px;text-align:right;color:#888">160 GB</td><td style="padding:8px 12px;color:#888;font-size:12px">High-traffic apps</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:8px 12px;color:#f87171;font-weight:700">M80</td><td style="padding:8px 12px;text-align:right;color:#fca5a5;font-weight:600">$5,256</td><td style="padding:8px 12px;text-align:right;color:#888">32</td><td style="padding:8px 12px;text-align:right;color:#888">128 GB</td><td style="padding:8px 12px;text-align:right;color:#888">750 GB</td><td style="padding:8px 12px;color:#888;font-size:12px">Large Enterprise</td></tr>
+                  <tr><td style="padding:8px 12px;color:#f87171;font-weight:700">M700</td><td style="padding:8px 12px;text-align:right;color:#fca5a5;font-weight:600">$23,947</td><td style="padding:8px 12px;text-align:right;color:#888">96</td><td style="padding:8px 12px;text-align:right;color:#888">768 GB</td><td style="padding:8px 12px;text-align:right;color:#888">4,000 GB</td><td style="padding:8px 12px;color:#888;font-size:12px">Hyperscale / Mission-critical</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- When to pay -->
+            <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e1e38">🤔 ตอนไหนควรเริ่มจ่ายเงิน?</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:20px">
+              <div style="background:#0d1a0d;border:1px solid #1a4a1a;border-radius:8px;padding:14px">
+                <div style="color:#28c840;font-weight:700;font-size:13px;margin-bottom:8px">✅ ใช้ฟรี (M0) เมื่อ...</div>
+                <div style="font-size:13px;color:#888;line-height:1.85">🎓 กำลังเรียนรู้ MongoDB<br>🧪 ทดสอบ / POC project<br>📱 แอปส่วนตัวที่ไม่ critical<br>📊 ข้อมูลไม่เกิน 512 MB<br>💤 ยอมรับได้ถ้า performance ช้าบ้าง</div>
+              </div>
+              <div style="background:#0d1a2a;border:1px solid #1a3a6a;border-radius:8px;padding:14px">
+                <div style="color:#4da6ff;font-weight:700;font-size:13px;margin-bottom:8px">⚡ เริ่ม Flex ($8–30) เมื่อ...</div>
+                <div style="font-size:13px;color:#888;line-height:1.85">👥 มี user จริง แต่ traffic ยังน้อย<br>💾 ต้องการ Backup เพื่อความมั่นใจ<br>📈 Traffic ขึ้นลงไม่แน่นอน<br>🚀 Dev/Staging environment<br>💰 คุมค่าใช้จ่ายไม่เกิน $30</div>
+              </div>
+              <div style="background:#1a1a0d;border:1px solid #4a3a1a;border-radius:8px;padding:14px">
+                <div style="color:#ffbd2e;font-weight:700;font-size:13px;margin-bottom:8px">🏭 อัปเกรด Dedicated เมื่อ...</div>
+                <div style="font-size:13px;color:#888;line-height:1.85">👔 Production ที่ลูกค้าใช้จริง<br>📋 ต้องการ SLA 99.95% uptime<br>🔒 มีข้อกำหนด compliance / PDPA<br>🌐 ต้องการ Multi-region<br>⚡ ต้องการ Performance คงที่</div>
+              </div>
+            </div>
+
+            <!-- Value for money -->
+            <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e1e38">💡 ความคุ้มค่าของแต่ละ Tier</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:8px;padding:14px;display:flex;gap:14px;align-items:flex-start">
+                <span style="font-size:24px;flex-shrink:0">🆓</span>
+                <div>
+                  <div style="color:#28c840;font-weight:700;font-size:13px;margin-bottom:4px">Free — ดียังไง?</div>
+                  <div style="font-size:13px;color:#888;line-height:1.75">ฟรีตลอดชีพไม่มีวันหมดอายุ ต่างจาก cloud อื่นที่ให้แค่ 30–90 วัน รองรับ AWS / GCP / Azure ทั้งหมด เหมาะมากสำหรับนักพัฒนาที่เพิ่งเริ่มต้น หรือแอปที่ data น้อย เช่น portfolio site หรือ internal tool ของทีมเล็กๆ</div>
+                  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                    <span style="background:#0d2a0d;color:#28c840;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #1a4a1a">Prototype</span>
+                    <span style="background:#0d2a0d;color:#28c840;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #1a4a1a">เรียนรู้</span>
+                    <span style="background:#0d2a0d;color:#28c840;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #1a4a1a">Side project</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:8px;padding:14px;display:flex;gap:14px;align-items:flex-start">
+                <span style="font-size:24px;flex-shrink:0">⚡</span>
+                <div>
+                  <div style="color:#4da6ff;font-weight:700;font-size:13px;margin-bottom:4px">Flex — ดียังไง?</div>
+                  <div style="font-size:13px;color:#888;line-height:1.75">จุดเด่นคือ <b style="color:#ccc">ราคา cap ที่ $30/เดือน</b> ไม่ว่า traffic จะพุ่งแค่ไหนก็ไม่เกิน budget ได้ backup ในตัว ไม่ต้องกลัวข้อมูลหาย คุ้มสุดในกลุ่มราคาถูก เหมาะกับ startup หรือแอปที่เพิ่งเริ่ม monetize</div>
+                  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                    <span style="background:#0a1a3a;color:#4da6ff;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #1a3a6a">Startup</span>
+                    <span style="background:#0a1a3a;color:#4da6ff;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #1a3a6a">Staging</span>
+                    <span style="background:#0a1a3a;color:#4da6ff;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #1a3a6a">Traffic ไม่แน่นอน</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:8px;padding:14px;display:flex;gap:14px;align-items:flex-start">
+                <span style="font-size:24px;flex-shrink:0">🏭</span>
+                <div>
+                  <div style="color:#ffbd2e;font-weight:700;font-size:13px;margin-bottom:4px">Dedicated — ดียังไง?</div>
+                  <div style="font-size:13px;color:#888;line-height:1.75">ได้ CPU/RAM เฉพาะตัว ไม่แชร์กับใคร Performance คงเส้นคงวาทุกชั่วโมง มี PITR (Point-in-Time Recovery) backup ทุกนาที multi-region รองรับ ราคาเหมือนกันทุก cloud provider (AWS/GCP/Azure) ไม่มี pricing arbitrage</div>
+                  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                    <span style="background:#2a1a0d;color:#ffbd2e;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #4a3a1a">Production</span>
+                    <span style="background:#2a1a0d;color:#ffbd2e;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #4a3a1a">Enterprise</span>
+                    <span style="background:#2a1a0d;color:#ffbd2e;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #4a3a1a">ต้องการ SLA</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:8px;padding:14px;display:flex;gap:14px;align-items:flex-start">
+                <span style="font-size:24px;flex-shrink:0">☁️</span>
+                <div>
+                  <div style="color:#c084fc;font-weight:700;font-size:13px;margin-bottom:4px">Serverless — ดียังไง? (และระวังอะไร?)</div>
+                  <div style="font-size:13px;color:#888;line-height:1.75">ไม่ต้องวางแผน capacity ล่วงหน้า จ่ายเฉพาะที่ใช้จริง ช่วง idle ไม่มีค่าใช้จ่าย เหมาะ event-driven apps หรือระบบที่ traffic คาดเดาไม่ได้ <b style="color:#e24b4a">⚠️ แต่ระวัง:</b> Write แพงกว่า Read ถึง 10× แอปที่ write เยอะอาจแพงกว่า Dedicated มาก</div>
+                  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                    <span style="background:#2a0a2a;color:#c084fc;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #4a1a6a">Event-driven</span>
+                    <span style="background:#2a0a2a;color:#c084fc;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #4a1a6a">Traffic ไม่แน่นอนสูง</span>
+                    <span style="background:#3a0d0d;color:#e24b4a;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #5a1a1a">⚠️ ไม่เหมาะ: Write-heavy</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden costs -->
+            <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e1e38">⚠️ ค่าใช้จ่ายซ่อนเร้นที่ต้องรู้</div>
+            <div style="background:#2a0d0d;border:1px solid #5a1a1a;border-radius:8px;padding:14px;margin-bottom:20px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+                <div><div style="color:#e24b4a;font-weight:700;font-size:13px;margin-bottom:6px">📤 Data Egress (ข้อมูลออก)</div><div style="font-size:12px;color:#aaa;line-height:1.8">AWS: $0.09/GB<br>GCP: $0.08–0.12/GB<br>Azure: $0.087/GB<br><span style="color:#555">100 GB แรก/เดือนฟรี (AWS)</span></div></div>
+                <div><div style="color:#ffbd2e;font-weight:700;font-size:13px;margin-bottom:6px">🛟 Support Tier</div><div style="font-size:12px;color:#aaa;line-height:1.8">Basic: ฟรี (8hr response)<br>Developer: $49/เดือน<br>Pro: $799/เดือน<br>Enterprise: Custom</div></div>
+                <div><div style="color:#4da6ff;font-weight:700;font-size:13px;margin-bottom:6px">➕ Add-on Services</div><div style="font-size:12px;color:#aaa;line-height:1.8">Atlas Search: ราคาเท่า cluster tier<br>Vector Search: min 2 nodes<br>Stream Processing: $36–3,000/เดือน<br>Data Federation: $5/TB scanned</div></div>
+              </div>
+            </div>
+
+            <!-- Decision table -->
+            <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e1e38">🧭 สรุปแนะนำ — เลือก Tier ไหนดี?</div>
+            <div style="background:#0d0d1a;border:1px solid #1e1e38;border-radius:8px;overflow:hidden;margin-bottom:16px">
+              <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead>
+                  <tr style="background:#12121f">
+                    <th style="padding:10px 14px;text-align:left;color:#666;font-size:11px;border-bottom:1px solid #2a2a4a">สถานการณ์</th>
+                    <th style="padding:10px 14px;text-align:center;color:#666;font-size:11px;border-bottom:1px solid #2a2a4a;white-space:nowrap">แนะนำ</th>
+                    <th style="padding:10px 14px;text-align:left;color:#666;font-size:11px;border-bottom:1px solid #2a2a4a">เหตุผล</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:9px 14px;color:#ccc">เรียนรู้ MongoDB / ทำโปรเจกต์จบ</td><td style="padding:9px 14px;text-align:center"><span style="background:#0d2a0d;color:#28c840;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px">Free M0</span></td><td style="padding:9px 14px;color:#888;font-size:12px">ฟรีตลอดชีพ เพียงพอสำหรับการเรียนรู้</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:9px 14px;color:#ccc">Startup ที่เพิ่งเปิดตัว มี user จริงแต่น้อย</td><td style="padding:9px 14px;text-align:center"><span style="background:#0a1a3a;color:#4da6ff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px">Flex</span></td><td style="padding:9px 14px;color:#888;font-size:12px">ได้ backup + cap ราคาไม่เกิน $30</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:9px 14px;color:#ccc">แอปที่ traffic ขึ้นลงมาก / seasonal</td><td style="padding:9px 14px;text-align:center"><span style="background:#2a0a2a;color:#c084fc;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px">Serverless</span></td><td style="padding:9px 14px;color:#888;font-size:12px">จ่ายตามใช้จริง ช่วง idle ไม่เสียเงิน</td></tr>
+                  <tr style="border-bottom:1px solid #151525;background:#0d0d1a"><td style="padding:9px 14px;color:#ccc">Production แอปขนาดเล็ก–กลาง</td><td style="padding:9px 14px;text-align:center"><span style="background:#0d2a1a;color:#28c840;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px">M10–M30</span></td><td style="padding:9px 14px;color:#888;font-size:12px">$57–$389/เดือน ได้ SLA + dedicated resource</td></tr>
+                  <tr style="border-bottom:1px solid #151525"><td style="padding:9px 14px;color:#ccc">ระบบ Enterprise / High-traffic</td><td style="padding:9px 14px;text-align:center"><span style="background:#2a1a0d;color:#ffbd2e;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px">M40–M80</span></td><td style="padding:9px 14px;color:#888;font-size:12px">$748–$5,256/เดือน performance สูง multi-region</td></tr>
+                  <tr><td style="padding:9px 14px;color:#ccc">Mission-critical / Hyperscale</td><td style="padding:9px 14px;text-align:center"><span style="background:#3a0d0d;color:#f87171;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px">M200–M700</span></td><td style="padding:9px 14px;color:#888;font-size:12px">$10,504–$23,947/เดือน scale ระดับ global</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="background:#1a1a0d;border:1px solid #3a3a1a;border-radius:8px;padding:12px 14px;font-size:12px;color:#888;line-height:1.8">
+              💡 <b style="color:#ffbd2e">เคล็ดลับ:</b> ราคา Dedicated เหมือนกันทุก cloud provider (AWS/GCP/Azure) — เลือกตาม infra ที่ทีมมีอยู่แล้วได้เลย ค่าใช้จ่ายที่ต่างกันจะอยู่ที่ backup storage และ data transfer ตาม region เท่านั้น
+            </div>
+
           </div>
         </div>
 
@@ -1754,7 +2151,7 @@ function switchTab(name,el){
 }
 
 function switchTabActive(name){
-  ['documents','aggregation','schema','indexes','cheatsheet','nosql','jsonbson','datatypes','design','transaction','errors'].forEach(function(t){
+  ['documents','aggregation','schema','indexes','cheatsheet','nosql','jsonbson','datatypes','design','transaction','errors','whymongo','pricing'].forEach(function(t){
     var el=document.getElementById(t+'-tab');
     if(t===name) el.classList.remove('hidden'); else el.classList.add('hidden');
   });
